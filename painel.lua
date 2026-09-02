@@ -1,139 +1,231 @@
---==================================================
--- TXZZ 76 • PAINEL COMPLETO
--- KEY SYSTEM + RIVALS + MORTE NEGRA
--- PC + CELULAR
---==================================================
+--========================================================--
+-- TXZZ 76 • MULTI GAME PANEL V8
+-- ROBLOX STUDIO • LOCALSCRIPT
+-- KEY + DISCORD + PERFIL + DATA/HORA + JOGOS + FPS BOOSTER
+-- + AIMBOT PLAYER + FOV + HITBOX + LOGO ABRIR/FECHAR
+--========================================================--
 
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---==================================================
--- CONFIGURAÇÃO
---==================================================
+--========================================================--
+-- CONFIG
+--========================================================--
 
+local DISCORD_LINK = "https://discord.gg/VBaUJPre49"
+local LOGO_ID = "rbxassetid://134571219107537"
 local KEY_CORRETA = "TXZZ-TESTE-123"
-local DISCORD_LINK = "https://discord.gg/KhAmznCuHm"
 
-local ICON_IMAGE = "rbxassetid://134571219107537"
+--========================================================--
+-- AIMBOT / FOV / HITBOX
+--========================================================--
 
-local KEY_DURATION = 24 * 60 * 60
-local keyExpiresAt = 0
+local aimbotEnabled = false
+local fovVisible = true
 
---==================================================
--- ESTADOS
---==================================================
+local fovSize = 120
+local hitboxSize = 6
 
-local states = {
+local currentAimTarget = nil
+local playerHitboxes = {}
 
-	-- RIVALS
-	["Mira Cabeça"] = false,
-	["Priorizar Cabeça"] = false,
-	["Atravessa Parede"] = false,
-	["Pulo Alto"] = false,
-	["Pulo Duplo"] = false,
-	["Pulo Triplo"] = false,
-	["Sem Dano Queda"] = false,
-	["Anti Empurrão"] = false,
-	["Linhas ESP"] = false,
-	["Caixa Corpo"] = false,
-	["Nome + Vida"] = false,
+local fovCircle
+local mainPanel
+local launcher
 
-	-- MORTE NEGRA
-	["Sem Dano"] = false,
-	["Habilidades Infinitas"] = false,
-	["Gruda e Não Desgruda"] = false,
-	["AFK Matador"] = false,
-	["Voar"] = false,
-	["Velocidade"] = false,
-	["Super Pulo"] = false,
-	["Linhas Inimigo"] = false,
-	["Caixa Corpo MN"] = false,
-	["Mostrar Nome"] = false,
-	["Mostrar Vida"] = false,
+--========================================================--
+-- LIMPAR VERSÃO ANTERIOR
+--========================================================--
 
-	-- SETTINGS
-	["Notificações"] = false,
-	["Animações"] = true,
-	["Modo Compacto"] = false
-}
+local old = playerGui:FindFirstChild("TXZZ76_V8")
 
---==================================================
--- GUI
---==================================================
+if old then
+	old:Destroy()
+end
+
+local oldV7 = playerGui:FindFirstChild("TXZZ76_V7")
+
+if oldV7 then
+	oldV7:Destroy()
+end
+
+--========================================================--
+-- SCREEN GUI
+--========================================================--
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "TXZZPanel"
+gui.Name = "TXZZ76_V8"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
-gui.DisplayOrder = 999
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = playerGui
 
---==================================================
--- FUNÇÕES
---==================================================
+--========================================================--
+-- CORES
+--========================================================--
 
-local function corner(obj, radius)
+local BG = Color3.fromRGB(13, 15, 22)
+local PANEL = Color3.fromRGB(19, 22, 31)
+local CARD = Color3.fromRGB(23, 27, 38)
 
+local BLUE = Color3.fromRGB(0, 160, 245)
+local BLUE2 = Color3.fromRGB(45, 110, 235)
+
+local TEXT = Color3.fromRGB(245, 245, 250)
+local SUB = Color3.fromRGB(145, 150, 165)
+
+local RED = Color3.fromRGB(160, 45, 55)
+local GREEN = Color3.fromRGB(40, 150, 85)
+
+--========================================================--
+-- ESTADO DA KEY
+--========================================================--
+
+local keyVerified = false
+local keyVerifiedAt = ""
+
+--========================================================--
+-- HELPERS
+--========================================================--
+
+local function addCorner(obj, radius)
 	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, radius)
+	c.CornerRadius = UDim.new(0, radius or 8)
 	c.Parent = obj
-
+	return c
 end
 
-local function stroke(obj, color, transparency, thickness)
-
+local function addStroke(obj, color)
 	local s = Instance.new("UIStroke")
-
-	s.Color = color
-	s.Transparency = transparency or 0
-	s.Thickness = thickness or 1
-
+	s.Color = color or BLUE2
+	s.Thickness = 1
+	s.Transparency = 0.5
 	s.Parent = obj
-
+	return s
 end
 
-local function animate(obj, time, properties)
+local function label(parent, text, size, position, fontSize, color)
+	local l = Instance.new("TextLabel")
 
-	local tween = TweenService:Create(
-		obj,
-		TweenInfo.new(
-			time,
-			Enum.EasingStyle.Quart,
-			Enum.EasingDirection.Out
-		),
-		properties
-	)
+	l.BackgroundTransparency = 1
+	l.Size = size
+	l.Position = position
 
-	tween:Play()
+	l.Text = text
+	l.TextColor3 = color or TEXT
+	l.TextSize = fontSize or 12
+	l.Font = Enum.Font.Gotham
 
-	return tween
+	l.TextXAlignment = Enum.TextXAlignment.Left
+	l.TextYAlignment = Enum.TextYAlignment.Center
 
+	l.Parent = parent
+
+	return l
 end
 
---==================================================
--- FUNÇÃO ARRASTAR
---==================================================
+local function button(parent, text, size, position, color)
+	local b = Instance.new("TextButton")
 
-local function makeDraggable(object, dragArea)
+	b.Size = size
+	b.Position = position
+
+	b.BackgroundColor3 = color or CARD
+	b.BorderSizePixel = 0
+
+	b.Text = text
+	b.TextColor3 = TEXT
+	b.TextSize = 12
+	b.Font = Enum.Font.GothamBold
+
+	b.AutoButtonColor = true
+
+	b.Parent = parent
+
+	addCorner(b, 8)
+
+	return b
+end
+
+--========================================================--
+-- NOTIFICAÇÕES
+--========================================================--
+
+local notifications = Instance.new("Frame")
+
+notifications.Name = "Notifications"
+notifications.BackgroundTransparency = 1
+notifications.Size = UDim2.new(0, 290, 0, 300)
+notifications.Position = UDim2.new(1, -305, 0, 20)
+
+notifications.Parent = gui
+
+local notificationLayout = Instance.new("UIListLayout")
+notificationLayout.Padding = UDim.new(0, 7)
+notificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+notificationLayout.Parent = notifications
+
+local function notify(message)
+
+	local n = Instance.new("TextLabel")
+
+	n.Size = UDim2.new(1, 0, 0, 42)
+	n.BackgroundColor3 = PANEL
+	n.BorderSizePixel = 0
+
+	n.Text = message
+	n.TextColor3 = TEXT
+	n.TextSize = 12
+	n.Font = Enum.Font.GothamMedium
+
+	n.TextWrapped = true
+
+	n.Parent = notifications
+
+	addCorner(n, 8)
+	addStroke(n)
+
+	task.delay(3, function()
+		if n and n.Parent then
+			n:Destroy()
+		end
+	end)
+end
+
+--========================================================--
+-- DRAG
+--========================================================--
+
+local function makeDraggable(window, bar)
+
+	bar.Active = true
 
 	local dragging = false
 	local dragStart
 	local startPosition
 
-	dragArea.InputBegan:Connect(function(input)
+	bar.InputBegan:Connect(function(input)
 
 		if input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch then
 
 			dragging = true
 			dragStart = input.Position
-			startPosition = object.Position
+			startPosition = window.Position
 
+			input.Changed:Connect(function()
+
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+
+			end)
 		end
 
 	end)
@@ -144,1250 +236,2143 @@ local function makeDraggable(object, dragArea)
 			return
 		end
 
-		if input.UserInputType == Enum.UserInputType.MouseMovement
-			or input.UserInputType == Enum.UserInputType.Touch then
-
-			local delta = input.Position - dragStart
-
-			object.Position = UDim2.new(
-				startPosition.X.Scale,
-				startPosition.X.Offset + delta.X,
-				startPosition.Y.Scale,
-				startPosition.Y.Offset + delta.Y
-			)
-
+		if input.UserInputType ~= Enum.UserInputType.MouseMovement
+			and input.UserInputType ~= Enum.UserInputType.Touch then
+			return
 		end
 
-	end)
+		local delta = input.Position - dragStart
 
-	UserInputService.InputEnded:Connect(function(input)
-
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch then
-
-			dragging = false
-
-		end
+		window.Position = UDim2.new(
+			startPosition.X.Scale,
+			startPosition.X.Offset + delta.X,
+			startPosition.Y.Scale,
+			startPosition.Y.Offset + delta.Y
+		)
 
 	end)
 
 end
 
---==================================================
--- KEY PAGE
---==================================================
+--========================================================--
+-- JANELA
+--========================================================--
 
-local keyPage = Instance.new("Frame")
+local function createWindow(width, height, titleText)
 
-keyPage.Name = "KeyPage"
-keyPage.Size = UDim2.fromOffset(380,270)
-keyPage.Position = UDim2.new(0.5,-190,0.5,-135)
+	local window = Instance.new("Frame")
 
-keyPage.BackgroundColor3 = Color3.fromRGB(10,10,13)
-keyPage.BorderSizePixel = 0
-keyPage.ClipsDescendants = true
+	window.Size = UDim2.new(0, width, 0, height)
+	window.Position = UDim2.new(0.5, 0, 0.5, 0)
+	window.AnchorPoint = Vector2.new(0.5, 0.5)
 
-keyPage.Parent = gui
+	window.BackgroundColor3 = BG
+	window.BorderSizePixel = 0
+	window.Active = true
 
-corner(keyPage,10)
+	window.Parent = gui
 
-stroke(
-	keyPage,
-	Color3.fromRGB(155,0,0),
-	0.15,
-	1
+	addCorner(window, 12)
+	addStroke(window)
+
+	-- TOP BAR
+
+	local top = Instance.new("Frame")
+
+	top.Size = UDim2.new(1, 0, 0, 42)
+
+	top.BackgroundColor3 = PANEL
+	top.BorderSizePixel = 0
+	top.Active = true
+
+	top.Parent = window
+
+	addCorner(top, 12)
+
+	-- TÍTULO
+
+	local title = label(
+		top,
+		titleText,
+		UDim2.new(1, -115, 1, 0),
+		UDim2.new(0, 14, 0, 0),
+		13,
+		TEXT
+	)
+
+	title.Font = Enum.Font.GothamBold
+
+	-- MINIMIZAR
+
+	local minimize = button(
+		top,
+		"—",
+		UDim2.new(0, 32, 0, 30),
+		UDim2.new(1, -70, 0, 6),
+		Color3.fromRGB(42, 46, 58)
+	)
+
+	-- FECHAR
+
+	local close = button(
+		top,
+		"×",
+		UDim2.new(0, 32, 0, 30),
+		UDim2.new(1, -34, 0, 6),
+		RED
+	)
+
+	-- CONTEÚDO
+
+	local content = Instance.new("Frame")
+
+	content.Size = UDim2.new(1, 0, 1, -42)
+	content.Position = UDim2.new(0, 0, 0, 42)
+
+	content.BackgroundTransparency = 1
+	content.Parent = window
+
+	local normalSize = window.Size
+	local minimized = false
+
+	minimize.MouseButton1Click:Connect(function()
+
+		minimized = not minimized
+
+		if minimized then
+
+			content.Visible = false
+
+			TweenService:Create(
+				window,
+				TweenInfo.new(0.18),
+				{
+					Size = UDim2.new(0, width, 0, 42)
+				}
+			):Play()
+
+		else
+
+			TweenService:Create(
+				window,
+				TweenInfo.new(0.18),
+				{
+					Size = normalSize
+				}
+			):Play()
+
+			task.delay(0.12, function()
+
+				if window.Parent then
+					content.Visible = true
+				end
+
+			end)
+		end
+
+	end)
+
+	close.MouseButton1Click:Connect(function()
+
+		--================================================--
+		-- NO PAINEL PRINCIPAL:
+		-- ESCONDE, NÃO DESTROI
+		--================================================--
+
+		if window == mainPanel then
+			window.Visible = false
+
+			if launcher then
+				launcher.Visible = true
+			end
+
+		else
+			window:Destroy()
+		end
+
+	end)
+
+	makeDraggable(window, top)
+
+	return window, content
+end
+
+--========================================================--
+-- FPS BOOSTER
+--========================================================--
+
+local fpsBoostEnabled = false
+local savedEffects = {}
+
+local function saveObject(object)
+
+	if savedEffects[object] then
+		return
+	end
+
+	if object:IsA("ParticleEmitter")
+		or object:IsA("Trail")
+		or object:IsA("Beam")
+		or object:IsA("Smoke")
+		or object:IsA("Fire")
+		or object:IsA("Sparkles") then
+
+		savedEffects[object] = {
+			Enabled = object.Enabled
+		}
+
+	end
+
+end
+
+local function setPerformance(enabled)
+
+	if enabled then
+
+		if fpsBoostEnabled then
+			return
+		end
+
+		fpsBoostEnabled = true
+
+		for _, obj in ipairs(workspace:GetDescendants()) do
+
+			if obj:IsA("ParticleEmitter")
+				or obj:IsA("Trail")
+				or obj:IsA("Beam")
+				or obj:IsA("Smoke")
+				or obj:IsA("Fire")
+				or obj:IsA("Sparkles") then
+
+				saveObject(obj)
+
+				pcall(function()
+					obj.Enabled = false
+				end)
+
+			end
+
+		end
+
+		for _, obj in ipairs(Lighting:GetChildren()) do
+
+			if obj:IsA("PostEffect") then
+
+				if not savedEffects[obj] then
+					savedEffects[obj] = {
+						Enabled = obj.Enabled
+					}
+				end
+
+				pcall(function()
+					obj.Enabled = false
+				end)
+
+			end
+
+		end
+
+		pcall(function()
+			Lighting.GlobalShadows = false
+		end)
+
+		notify("⚡ FPS Booster ativado!")
+
+	else
+
+		fpsBoostEnabled = false
+
+		for obj, data in pairs(savedEffects) do
+
+			if obj and obj.Parent then
+
+				pcall(function()
+					obj.Enabled = data.Enabled
+				end)
+
+			end
+
+		end
+
+		savedEffects = {}
+
+		pcall(function()
+			Lighting.GlobalShadows = true
+		end)
+
+		notify("♻️ Gráficos restaurados.")
+
+	end
+
+end
+
+--========================================================--
+-- KEY WINDOW
+--========================================================--
+
+local keyWindow, keyContent = createWindow(
+	370,
+	330,
+	"TXZZ 76 • KEY SYSTEM"
 )
 
---==================================================
--- KEY HEADER
---==================================================
+-- LOGO
 
-local keyHeader = Instance.new("Frame")
+local logo = Instance.new("ImageLabel")
 
-keyHeader.Size = UDim2.new(1,0,0,46)
-keyHeader.BackgroundColor3 = Color3.fromRGB(14,14,18)
-keyHeader.BorderSizePixel = 0
-keyHeader.Parent = keyPage
+logo.BackgroundTransparency = 1
 
-local keyIcon = Instance.new("ImageLabel")
+logo.Size = UDim2.new(0, 58, 0, 58)
+logo.Position = UDim2.new(1, -72, 0, 48)
 
-keyIcon.Image = ICON_IMAGE
-keyIcon.ScaleType = Enum.ScaleType.Crop
-keyIcon.Size = UDim2.fromOffset(32,32)
-keyIcon.Position = UDim2.fromOffset(10,7)
-keyIcon.BackgroundColor3 = Color3.fromRGB(155,0,0)
-keyIcon.BorderSizePixel = 0
-keyIcon.Parent = keyHeader
+logo.Image = LOGO_ID
+logo.ScaleType = Enum.ScaleType.Fit
 
-corner(keyIcon,8)
+logo.Parent = keyContent
 
-local keyTitle = Instance.new("TextLabel")
+-- TÍTULO
 
-keyTitle.Size = UDim2.new(1,-145,1,0)
-keyTitle.Position = UDim2.fromOffset(52,0)
+local keyTitle = label(
+	keyContent,
+	"🔐 Digite sua Key",
+	UDim2.new(1, -85, 0, 30),
+	UDim2.new(0, 15, 0, 15),
+	18,
+	TEXT
+)
 
-keyTitle.BackgroundTransparency = 1
-keyTitle.Text = "TXZZ KEY SYSTEM"
-
-keyTitle.TextColor3 = Color3.fromRGB(235,235,235)
-keyTitle.TextSize = 17
 keyTitle.Font = Enum.Font.GothamBold
-keyTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-keyTitle.Parent = keyHeader
+label(
+	keyContent,
+	"Pegue sua Key no Discord e cole abaixo.",
+	UDim2.new(1, -30, 0, 25),
+	UDim2.new(0, 15, 0, 48),
+	11,
+	SUB
+)
 
---==================================================
--- KEY MINIMIZAR
---==================================================
-
-local keyMinimize = Instance.new("TextButton")
-
-keyMinimize.Size = UDim2.fromOffset(28,28)
-keyMinimize.Position = UDim2.new(1,-66,0,9)
-
-keyMinimize.BackgroundColor3 = Color3.fromRGB(45,45,52)
-keyMinimize.BorderSizePixel = 0
-
-keyMinimize.Text = "—"
-keyMinimize.TextColor3 = Color3.new(1,1,1)
-keyMinimize.TextSize = 15
-keyMinimize.Font = Enum.Font.GothamBold
-
-keyMinimize.Parent = keyHeader
-
-corner(keyMinimize,6)
-
---==================================================
--- KEY FECHAR
---==================================================
-
-local keyClose = Instance.new("TextButton")
-
-keyClose.Size = UDim2.fromOffset(28,28)
-keyClose.Position = UDim2.new(1,-34,0,9)
-
-keyClose.BackgroundColor3 = Color3.fromRGB(125,20,25)
-keyClose.BorderSizePixel = 0
-
-keyClose.Text = "X"
-keyClose.TextColor3 = Color3.new(1,1,1)
-keyClose.TextSize = 12
-keyClose.Font = Enum.Font.GothamBold
-
-keyClose.Parent = keyHeader
-
-corner(keyClose,6)
-
---==================================================
--- KEY INFO
---==================================================
-
-local keyInfo = Instance.new("TextLabel")
-
-keyInfo.Size = UDim2.new(1,-30,0,26)
-keyInfo.Position = UDim2.fromOffset(15,58)
-
-keyInfo.BackgroundTransparency = 1
-keyInfo.Text = "Digite sua key para continuar"
-
-keyInfo.TextColor3 = Color3.fromRGB(145,145,155)
-keyInfo.TextSize = 13
-keyInfo.Font = Enum.Font.Gotham
-
-keyInfo.Parent = keyPage
-
---==================================================
 -- KEY BOX
---==================================================
 
 local keyBox = Instance.new("TextBox")
 
-keyBox.Size = UDim2.new(1,-30,0,42)
-keyBox.Position = UDim2.fromOffset(15,91)
+keyBox.Size = UDim2.new(1, -30, 0, 42)
+keyBox.Position = UDim2.new(0, 15, 0, 78)
 
-keyBox.BackgroundColor3 = Color3.fromRGB(24,24,29)
+keyBox.BackgroundColor3 = CARD
 keyBox.BorderSizePixel = 0
 
-keyBox.PlaceholderText = "Digite sua key..."
-keyBox.PlaceholderColor3 = Color3.fromRGB(90,90,100)
+keyBox.PlaceholderText = "Digite sua Key..."
+keyBox.PlaceholderColor3 = SUB
 
 keyBox.Text = ""
-keyBox.TextColor3 = Color3.new(1,1,1)
-
-keyBox.TextSize = 14
+keyBox.TextColor3 = TEXT
+keyBox.TextSize = 12
 keyBox.Font = Enum.Font.Gotham
 
 keyBox.ClearTextOnFocus = false
 
-keyBox.Parent = keyPage
+keyBox.Parent = keyContent
 
-corner(keyBox,7)
+addCorner(keyBox, 8)
+addStroke(keyBox)
 
---==================================================
--- VALIDAR
---==================================================
+-- VERIFICAR
 
-local validate = Instance.new("TextButton")
+local verify = button(
+	keyContent,
+	"✓ VERIFICAR KEY",
+	UDim2.new(1, -30, 0, 40),
+	UDim2.new(0, 15, 0, 130),
+	BLUE2
+)
 
-validate.Size = UDim2.new(1,-30,0,40)
-validate.Position = UDim2.fromOffset(15,142)
-
-validate.BackgroundColor3 = Color3.fromRGB(145,0,0)
-validate.BorderSizePixel = 0
-
-validate.Text = "VALIDAR KEY"
-
-validate.TextColor3 = Color3.new(1,1,1)
-validate.TextSize = 13
-validate.Font = Enum.Font.GothamBold
-
-validate.Parent = keyPage
-
-corner(validate,7)
-
---==================================================
 -- DISCORD
---==================================================
 
-local discord = Instance.new("TextButton")
+local discord = button(
+	keyContent,
+	"💬 PEGAR KEY NO DISCORD",
+	UDim2.new(1, -30, 0, 38),
+	UDim2.new(0, 15, 0, 178),
+	Color3.fromRGB(65, 75, 150)
+)
 
-discord.Size = UDim2.new(1,-30,0,40)
-discord.Position = UDim2.fromOffset(15,190)
+-- LINK
 
-discord.BackgroundColor3 = Color3.fromRGB(70,72,150)
-discord.BorderSizePixel = 0
+local discordLink = Instance.new("TextBox")
 
-discord.Text = "COPIAR LINK DO DISCORD"
+discordLink.Size = UDim2.new(1, -30, 0, 30)
+discordLink.Position = UDim2.new(0, 15, 0, 225)
 
-discord.TextColor3 = Color3.new(1,1,1)
-discord.TextSize = 13
-discord.Font = Enum.Font.GothamBold
+discordLink.BackgroundTransparency = 1
 
-discord.Parent = keyPage
+discordLink.Text = DISCORD_LINK
+discordLink.TextColor3 = Color3.fromRGB(100, 160, 255)
 
-corner(discord,7)
+discordLink.TextSize = 10
+discordLink.Font = Enum.Font.Gotham
 
---==================================================
--- STATUS
---==================================================
+discordLink.TextXAlignment = Enum.TextXAlignment.Center
 
-local status = Instance.new("TextLabel")
+discordLink.TextEditable = false
+discordLink.ClearTextOnFocus = false
 
-status.Size = UDim2.new(1,-30,0,24)
-status.Position = UDim2.fromOffset(15,238)
+discordLink.Parent = keyContent
 
-status.BackgroundTransparency = 1
-status.Text = ""
+--========================================================--
+-- SELETOR DE JOGO
+--========================================================--
 
-status.TextSize = 12
-status.Font = Enum.Font.Gotham
+local function openSelector()
 
-status.Parent = keyPage
+	if keyWindow and keyWindow.Parent then
+		keyWindow:Destroy()
+	end
 
---==================================================
--- DISCORD COPY
---==================================================
+	local selector, content = createWindow(
+		590,
+		430,
+		"TXZZ 76 • SELECIONAR JOGO"
+	)
 
-discord.Activated:Connect(function()
+	-- PESQUISA
 
-	if setclipboard then
+	local search = Instance.new("TextBox")
 
-		setclipboard(DISCORD_LINK)
+	search.Size = UDim2.new(1, -30, 0, 38)
+	search.Position = UDim2.new(0, 15, 0, 12)
 
-		status.Text = "LINK COPIADO!"
+	search.BackgroundColor3 = CARD
+	search.BorderSizePixel = 0
 
-	else
+	search.PlaceholderText = "🔎 Pesquisar jogo..."
+	search.PlaceholderColor3 = SUB
 
-		status.Text = DISCORD_LINK
+	search.Text = ""
+	search.TextColor3 = TEXT
+
+	search.TextSize = 12
+	search.Font = Enum.Font.Gotham
+
+	search.ClearTextOnFocus = false
+
+	search.Parent = content
+
+	addCorner(search, 8)
+	addStroke(search)
+
+	-- SCROLL
+
+	local scroll = Instance.new("ScrollingFrame")
+
+	scroll.Size = UDim2.new(1, -30, 1, -65)
+	scroll.Position = UDim2.new(0, 15, 0, 58)
+
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
+
+	scroll.ScrollBarThickness = 4
+
+	scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+	scroll.Parent = content
+
+	-- GRID
+
+	local grid = Instance.new("UIGridLayout")
+
+	grid.CellSize = UDim2.new(0.5, -6, 0, 70)
+
+	grid.CellPadding = UDim2.new(0, 10, 0, 10)
+
+	grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	grid.SortOrder = Enum.SortOrder.LayoutOrder
+
+	grid.Parent = scroll
+
+	--====================================================--
+	-- JOGOS
+	--====================================================--
+
+	local games = {
+
+		{"🍎", "Blox Fruits"},
+		{"🔫", "RIVALS"},
+		{"☠️", "Morte Negra"},
+		{"⛏️", "Quebre um Bloco"},
+		{"⚔️", "TXZZ PVP"},
+		{"🎮", "Outro Jogo"}
+
+	}
+
+	local items = {}
+
+	--====================================================--
+	-- CRIAR JOGOS
+	--====================================================--
+
+	for index, data in ipairs(games) do
+
+		local gameButton = Instance.new("TextButton")
+
+		gameButton.BackgroundColor3 = CARD
+		gameButton.BorderSizePixel = 0
+
+		gameButton.Text = ""
+
+		gameButton.LayoutOrder = index
+
+		gameButton.Parent = scroll
+
+		addCorner(gameButton, 9)
+		addStroke(gameButton)
+
+		-- ÍCONE
+
+		local icon = label(
+			gameButton,
+			data[1],
+			UDim2.new(0, 45, 1, 0),
+			UDim2.new(0, 5, 0, 0),
+			24,
+			TEXT
+		)
+
+		icon.TextXAlignment = Enum.TextXAlignment.Center
+
+		-- NOME
+
+		local gameName = label(
+			gameButton,
+			data[2],
+			UDim2.new(1, -58, 0, 25),
+			UDim2.new(0, 55, 0, 10),
+			13,
+			TEXT
+		)
+
+		gameName.Font = Enum.Font.GothamBold
+
+		-- SUB
+
+		label(
+			gameButton,
+			"Selecionar",
+			UDim2.new(1, -58, 0, 20),
+			UDim2.new(0, 55, 0, 36),
+			10,
+			SUB
+		)
+
+		table.insert(items, {
+			button = gameButton,
+			name = string.lower(data[2])
+		})
+
+		--================================================--
+		-- SELECIONAR
+		--================================================--
+
+		gameButton.MouseButton1Click:Connect(function()
+
+			selector:Destroy()
+
+			local loading, loadingContent = createWindow(
+				380,
+				195,
+				"TXZZ 76 • CARREGANDO"
+			)
+
+			label(
+				loadingContent,
+				"Carregando " .. data[2],
+				UDim2.new(1, -30, 0, 30),
+				UDim2.new(0, 15, 0, 18),
+				16,
+				TEXT
+			).Font = Enum.Font.GothamBold
+
+			-- BARRA
+
+			local back = Instance.new("Frame")
+
+			back.Size = UDim2.new(1, -30, 0, 14)
+			back.Position = UDim2.new(0, 15, 0, 68)
+
+			back.BackgroundColor3 = Color3.fromRGB(32, 36, 48)
+			back.BorderSizePixel = 0
+
+			back.Parent = loadingContent
+
+			addCorner(back, 7)
+
+			local fill = Instance.new("Frame")
+
+			fill.Size = UDim2.new(0, 0, 1, 0)
+
+			fill.BackgroundColor3 = BLUE
+			fill.BorderSizePixel = 0
+
+			fill.Parent = back
+
+			addCorner(fill, 7)
+
+			-- PORCENTAGEM
+
+			local percent = label(
+				loadingContent,
+				"0%",
+				UDim2.new(1, 0, 0, 25),
+				UDim2.new(0, 0, 0, 95),
+				12,
+				SUB
+			)
+
+			percent.TextXAlignment = Enum.TextXAlignment.Center
+
+			--================================================--
+			-- LOADING
+			--================================================--
+
+			task.spawn(function()
+
+				for i = 0, 100, 5 do
+
+					if not loading.Parent then
+						return
+					end
+
+					percent.Text = i .. "%"
+
+					TweenService:Create(
+						fill,
+						TweenInfo.new(0.07),
+						{
+							Size = UDim2.new(i / 100, 0, 1, 0)
+						}
+					):Play()
+
+					task.wait(0.07)
+
+				end
+
+				task.wait(0.25)
+
+				if loading and loading.Parent then
+					loading:Destroy()
+				end
+
+				--================================================--
+				-- PAINEL PRINCIPAL
+				--================================================--
+
+				local main, mainContent = createWindow(
+					720,
+					470,
+					"TXZZ 76 • " .. data[2]
+				)
+
+				mainPanel = main
+				main:SetAttribute("TXZZ_MainPanel", true)
+
+				--================================================--
+				-- SIDEBAR
+				--================================================--
+
+				local sidebar = Instance.new("Frame")
+
+				sidebar.Size = UDim2.new(0, 170, 1, 0)
+
+				sidebar.BackgroundColor3 = PANEL
+				sidebar.BorderSizePixel = 0
+
+				sidebar.Parent = mainContent
+
+				addCorner(sidebar, 10)
+
+				local sideTitle = label(
+					sidebar,
+					"TXZZ 76",
+					UDim2.new(1, -20, 0, 30),
+					UDim2.new(0, 10, 0, 12),
+					19,
+					TEXT
+				)
+
+				sideTitle.Font = Enum.Font.GothamBlack
+
+				label(
+					sidebar,
+					data[2],
+					UDim2.new(1, -20, 0, 25),
+					UDim2.new(0, 10, 0, 42),
+					10,
+					Color3.fromRGB(85, 150, 255)
+				).Font = Enum.Font.GothamBold
+
+				--================================================--
+				-- ÁREA DAS PÁGINAS
+				--================================================--
+
+				local pageArea = Instance.new("Frame")
+
+				pageArea.Size = UDim2.new(1, -180, 1, -10)
+				pageArea.Position = UDim2.new(0, 180, 0, 5)
+
+				pageArea.BackgroundTransparency = 1
+
+				pageArea.Parent = mainContent
+
+				local pages = {}
+
+				local function createPage(name)
+
+					local page = Instance.new("Frame")
+
+					page.Name = name
+
+					page.Size = UDim2.new(1, 0, 1, 0)
+
+					page.BackgroundTransparency = 1
+					page.Visible = false
+
+					page.Parent = pageArea
+
+					pages[name] = page
+
+					return page
+				end
+
+				local home = createPage("Inicio")
+				local fps = createPage("FPS")
+				local gamePage = createPage("Jogo")
+				local settings = createPage("Configuracoes")
+				local dcPage = createPage("Discord")
+
+				home.Visible = true
+
+				--================================================--
+				-- TÍTULOS
+				--================================================--
+
+				local function pageTitle(page, titleText, subtitle)
+
+					local t = label(
+						page,
+						titleText,
+						UDim2.new(1, -20, 0, 30),
+						UDim2.new(0, 10, 0, 10),
+						19,
+						TEXT
+					)
+
+					t.Font = Enum.Font.GothamBold
+
+					label(
+						page,
+						subtitle,
+						UDim2.new(1, -20, 0, 25),
+						UDim2.new(0, 10, 0, 42),
+						10,
+						SUB
+					)
+
+				end
+
+				pageTitle(
+					home,
+					"Painel principal",
+					"Bem-vindo ao TXZZ 76."
+				)
+
+				pageTitle(
+					fps,
+					"⚡ FPS Booster",
+					"Modo de desempenho para PC e celular."
+				)
+
+				pageTitle(
+					gamePage,
+					"🎮 Jogo",
+					"Opções disponíveis para esta experiência."
+				)
+
+				pageTitle(
+					settings,
+					"⚙ Configurações",
+					"Configurações do painel."
+				)
+
+				pageTitle(
+					dcPage,
+					"💬 Discord",
+					"Servidor oficial do TXZZ 76."
+				)
+
+				--================================================--
+				-- PERFIL
+				--================================================--
+
+				local profile = Instance.new("Frame")
+
+				profile.Name = "PlayerProfile"
+
+				profile.Size = UDim2.new(1, -20, 0, 125)
+				profile.Position = UDim2.new(0, 10, 0, 75)
+
+				profile.BackgroundColor3 = Color3.fromRGB(18, 21, 30)
+				profile.BorderSizePixel = 0
+
+				profile.Parent = home
+
+				addCorner(profile, 10)
+				addStroke(profile)
+
+				-- FAIXA AZUL
+
+				local blueTop = Instance.new("Frame")
+
+				blueTop.Size = UDim2.new(1, 0, 0, 28)
+
+				blueTop.BackgroundColor3 = BLUE
+				blueTop.BorderSizePixel = 0
+
+				blueTop.Parent = profile
+
+				addCorner(blueTop, 10)
+
+				-- AVATAR
+
+				local avatar = Instance.new("ImageLabel")
+
+				avatar.Size = UDim2.new(0, 62, 0, 62)
+
+				avatar.Position = UDim2.new(0, 12, 0, 22)
+
+				avatar.BackgroundColor3 = Color3.fromRGB(28, 32, 43)
+				avatar.BorderSizePixel = 0
+
+				avatar.Parent = profile
+
+				addCorner(avatar, 31)
+
+				task.spawn(function()
+
+					local success, image = pcall(function()
+
+						return Players:GetUserThumbnailAsync(
+							player.UserId,
+							Enum.ThumbnailType.HeadShot,
+							Enum.ThumbnailSize.Size150x150
+						)
+
+					end)
+
+					if success and image then
+						avatar.Image = image
+					end
+
+				end)
+
+				-- NOME
+
+				local playerName = label(
+					profile,
+					player.DisplayName,
+					UDim2.new(1, -100, 0, 23),
+					UDim2.new(0, 88, 0, 34),
+					15,
+					TEXT
+				)
+
+				playerName.Font = Enum.Font.GothamBold
+
+				-- USERNAME
+
+				label(
+					profile,
+					"@" .. player.Name,
+					UDim2.new(1, -100, 0, 18),
+					UDim2.new(0, 88, 0, 57),
+					10,
+					SUB
+				)
+
+				-- STATUS KEY
+
+				local keyStatus = Instance.new("Frame")
+
+				keyStatus.Size = UDim2.new(1, -24, 0, 27)
+				keyStatus.Position = UDim2.new(0, 12, 0, 90)
+
+				keyStatus.BackgroundColor3 = Color3.fromRGB(13, 16, 24)
+				keyStatus.BorderSizePixel = 0
+
+				keyStatus.Parent = profile
+
+				addCorner(keyStatus, 6)
+
+				local keyText = label(
+					keyStatus,
+					"",
+					UDim2.new(1, -15, 1, 0),
+					UDim2.new(0, 8, 0, 0),
+					10,
+					TEXT
+				)
+
+				keyText.Font = Enum.Font.GothamBold
+
+				if keyVerified then
+
+					keyText.Text =
+						"🔑 Lifetime Key  •  Verificada em " .. keyVerifiedAt
+
+					keyText.TextColor3 = Color3.fromRGB(80, 220, 130)
+
+				else
+
+					keyText.Text =
+						"🔑 Lifetime Key  •  Aguardando verificação"
+
+				end
+
+				--================================================--
+				-- HOME CARDS
+				--================================================--
+
+				local function infoCard(parent, text, sub, y)
+
+					local card = Instance.new("Frame")
+
+					card.Size = UDim2.new(1, -20, 0, 55)
+					card.Position = UDim2.new(0, 10, 0, y)
+
+					card.BackgroundColor3 = CARD
+					card.BorderSizePixel = 0
+
+					card.Parent = parent
+
+					addCorner(card, 8)
+					addStroke(card)
+
+					local a = label(
+						card,
+						text,
+						UDim2.new(1, -20, 0, 23),
+						UDim2.new(0, 10, 0, 5),
+						12,
+						TEXT
+					)
+
+					a.Font = Enum.Font.GothamBold
+
+					label(
+						card,
+						sub,
+						UDim2.new(1, -20, 0, 20),
+						UDim2.new(0, 10, 0, 29),
+						9,
+						SUB
+					)
+
+				end
+
+				infoCard(
+					home,
+					"🎮 Jogo selecionado",
+					data[2],
+					210
+				)
+
+				infoCard(
+					home,
+					"⚡ FPS Booster",
+					"PC + Celular",
+					273
+				)
+
+				--================================================--
+				-- FPS
+				--================================================--
+
+				local fpsStatus = label(
+					fps,
+					"Status: DESATIVADO",
+					UDim2.new(1, -20, 0, 30),
+					UDim2.new(0, 10, 0, 82),
+					13,
+					SUB
+				)
+
+				fpsStatus.Font = Enum.Font.GothamBold
+
+				local fpsButton = button(
+					fps,
+					"⚡ ATIVAR FPS BOOSTER",
+					UDim2.new(1, -20, 0, 45),
+					UDim2.new(0, 10, 0, 120),
+					BLUE2
+				)
+
+				fpsButton.MouseButton1Click:Connect(function()
+
+					setPerformance(not fpsBoostEnabled)
+
+					if fpsBoostEnabled then
+
+						fpsButton.Text = "♻️ RESTAURAR GRÁFICOS"
+						fpsButton.BackgroundColor3 = GREEN
+
+						fpsStatus.Text =
+							"Status: ATIVADO"
+
+					else
+
+						fpsButton.Text =
+							"⚡ ATIVAR FPS BOOSTER"
+
+						fpsButton.BackgroundColor3 =
+							BLUE2
+
+						fpsStatus.Text =
+							"Status: DESATIVADO"
+
+					end
+
+				end)
+
+				-- INFO FPS
+
+				local fpsInfo = Instance.new("Frame")
+
+				fpsInfo.Size = UDim2.new(1, -20, 0, 125)
+				fpsInfo.Position = UDim2.new(0, 10, 0, 180)
+
+				fpsInfo.BackgroundColor3 = CARD
+				fpsInfo.BorderSizePixel = 0
+
+				fpsInfo.Parent = fps
+
+				addCorner(fpsInfo, 8)
+
+				local fpsInfoTitle = label(
+					fpsInfo,
+					"🚀 O que o Booster faz",
+					UDim2.new(1, -20, 0, 25),
+					UDim2.new(0, 10, 0, 8),
+					12,
+					TEXT
+				)
+
+				fpsInfoTitle.Font = Enum.Font.GothamBold
+
+				label(
+					fpsInfo,
+					"• Desativa partículas\n• Desativa efeitos pesados\n• Desativa pós-processamento\n• Desativa sombras globais\n• Ajuda dispositivos fracos",
+					UDim2.new(1, -20, 1, -38),
+					UDim2.new(0, 10, 0, 34),
+					10,
+					SUB
+				)
+
+				-- CONTADOR FPS
+
+				local fpsCounter = label(
+					fps,
+					"FPS: calculando...",
+					UDim2.new(1, -20, 0, 25),
+					UDim2.new(0, 10, 1, -35),
+					11,
+					Color3.fromRGB(100, 160, 255)
+				)
+
+				fpsCounter.TextXAlignment =
+					Enum.TextXAlignment.Right
+
+				local frames = 0
+				local lastTime = os.clock()
+
+				RunService.RenderStepped:Connect(function()
+
+					if not fps.Parent then
+						return
+					end
+
+					frames += 1
+
+					local now = os.clock()
+
+					if now - lastTime >= 1 then
+
+						fpsCounter.Text =
+							"FPS: " .. frames
+
+						frames = 0
+						lastTime = now
+
+					end
+
+				end)
+
+				--================================================--
+				-- JOGO
+				--================================================--
+
+				local gameOption1 = button(
+					gamePage,
+					"🎮 Opção 1  [OFF]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 85),
+					CARD
+				)
+
+				local gameOption2 = button(
+					gamePage,
+					"🎯 Opção 2  [OFF]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 137),
+					CARD
+				)
+
+				local gameOption3 = button(
+					gamePage,
+					"⚙ Opção 3  [OFF]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 189),
+					CARD
+				)
+
+				local function toggleButton(btn, text)
+
+					local active = false
+
+					btn.MouseButton1Click:Connect(function()
+
+						active = not active
+
+						if active then
+
+							btn.Text =
+								text .. "  [ON]"
+
+							btn.BackgroundColor3 =
+								GREEN
+
+						else
+
+							btn.Text =
+								text .. "  [OFF]"
+
+							btn.BackgroundColor3 =
+								CARD
+
+						end
+
+					end)
+
+				end
+
+				toggleButton(
+					gameOption1,
+					"🎮 Opção 1"
+				)
+
+				toggleButton(
+					gameOption2,
+					"🎯 Opção 2"
+				)
+
+				toggleButton(
+					gameOption3,
+					"⚙ Opção 3"
+				)
+
+				--================================================--
+				-- AIMBOT
+				--================================================--
+
+				local aimbotButton = button(
+					gamePage,
+					"🎯 Aimbot Player  [OFF]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 241),
+					CARD
+				)
+
+				aimbotButton.MouseButton1Click:Connect(function()
+
+					aimbotEnabled = not aimbotEnabled
+
+					if aimbotEnabled then
+
+						aimbotButton.Text =
+							"🎯 Aimbot Player  [ON]"
+
+						aimbotButton.BackgroundColor3 =
+							GREEN
+
+						currentAimTarget = nil
+
+						notify("🎯 Aimbot Player ativado.")
+
+					else
+
+						aimbotButton.Text =
+							"🎯 Aimbot Player  [OFF]"
+
+						aimbotButton.BackgroundColor3 =
+							CARD
+
+						currentAimTarget = nil
+
+						notify("🎯 Aimbot Player desativado.")
+
+					end
+
+				end)
+
+				--================================================--
+				-- FOV
+				--================================================--
+
+				local fovButton = button(
+					gamePage,
+					"🔴 FOV  [ON]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 293),
+					GREEN
+				)
+
+				fovButton.MouseButton1Click:Connect(function()
+
+					fovVisible = not fovVisible
+
+					if fovVisible then
+
+						fovButton.Text =
+							"🔴 FOV  [ON]"
+
+						fovButton.BackgroundColor3 =
+							GREEN
+
+						if fovCircle then
+							fovCircle.Visible = true
+						end
+
+					else
+
+						fovButton.Text =
+							"🔴 FOV  [OFF]"
+
+						fovButton.BackgroundColor3 =
+							CARD
+
+						if fovCircle then
+							fovCircle.Visible = false
+						end
+
+					end
+
+				end)
+
+				--================================================--
+				-- HITBOX
+				--================================================--
+
+				local hitboxButton = button(
+					gamePage,
+					"📦 Hitbox Player  [OFF]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 345),
+					CARD
+				)
+
+				local hitboxEnabled = false
+
+				hitboxButton.MouseButton1Click:Connect(function()
+
+					hitboxEnabled = not hitboxEnabled
+
+					if hitboxEnabled then
+
+						hitboxButton.Text =
+							"📦 Hitbox Player  [ON]"
+
+						hitboxButton.BackgroundColor3 =
+							GREEN
+
+						-- Aplica imediatamente
+						for _, plr in ipairs(Players:GetPlayers()) do
+
+							if plr ~= player then
+
+								local character = plr.Character
+								local root =
+									character and character:FindFirstChild("HumanoidRootPart")
+
+								if root then
+
+									if not playerHitboxes[plr] then
+
+										playerHitboxes[plr] = {
+											Size = root.Size,
+											Transparency = root.Transparency
+										}
+
+									end
+
+									root.Size = Vector3.new(
+										hitboxSize,
+										hitboxSize,
+										hitboxSize
+									)
+
+									root.Transparency = 0.65
+
+								end
+
+							end
+
+						end
+
+						notify(
+							"📦 Hitbox Player ativada: " ..
+							hitboxSize
+						)
+
+					else
+
+						hitboxButton.Text =
+							"📦 Hitbox Player  [OFF]"
+
+						hitboxButton.BackgroundColor3 =
+							CARD
+
+						for plr, dataSaved in pairs(playerHitboxes) do
+
+							local character = plr.Character
+							local root =
+								character and character:FindFirstChild("HumanoidRootPart")
+
+							if root then
+
+								root.Size = dataSaved.Size
+								root.Transparency =
+									dataSaved.Transparency
+
+							end
+
+						end
+
+						playerHitboxes = {}
+
+						notify("📦 Hitbox restaurada.")
+
+					end
+
+				end)
+
+				--================================================--
+				-- CONFIGURAÇÕES
+				--================================================--
+
+				local compactButton = button(
+					settings,
+					"📐 Interface compacta  [OFF]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 85),
+					CARD
+				)
+
+				toggleButton(
+					compactButton,
+					"📐 Interface compacta"
+				)
+
+				local notificationButton = button(
+					settings,
+					"🔔 Notificações  [ON]",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 137),
+					GREEN
+				)
+
+				toggleButton(
+					notificationButton,
+					"🔔 Notificações"
+				)
+
+				--================================================--
+				-- TAMANHO DO FOV
+				--================================================--
+
+				local fovLabel = label(
+					settings,
+					"🔴 Tamanho do FOV: " .. fovSize,
+					UDim2.new(1, -20, 0, 25),
+					UDim2.new(0, 10, 0, 185),
+					11,
+					TEXT
+				)
+
+				local fovBox = Instance.new("TextBox")
+
+				fovBox.Size = UDim2.new(1, -20, 0, 38)
+				fovBox.Position = UDim2.new(0, 10, 0, 210)
+
+				fovBox.BackgroundColor3 = CARD
+				fovBox.BorderSizePixel = 0
+
+				fovBox.Text = tostring(fovSize)
+				fovBox.PlaceholderText = "Digite de 1 até 200"
+				fovBox.PlaceholderColor3 = SUB
+
+				fovBox.TextColor3 = TEXT
+				fovBox.TextSize = 12
+				fovBox.Font = Enum.Font.Gotham
+
+				fovBox.ClearTextOnFocus = false
+
+				fovBox.Parent = settings
+
+				addCorner(fovBox, 8)
+				addStroke(fovBox)
+
+				fovBox.FocusLost:Connect(function()
+
+					local value =
+						tonumber(fovBox.Text)
+
+					if value then
+
+						value = math.clamp(
+							math.floor(value),
+							1,
+							200
+						)
+
+						fovSize = value
+
+						fovBox.Text =
+							tostring(fovSize)
+
+						fovLabel.Text =
+							"🔴 Tamanho do FOV: " ..
+							fovSize
+
+					else
+
+						fovBox.Text =
+							tostring(fovSize)
+
+					end
+
+				end)
+
+				--================================================--
+				-- TAMANHO DA HITBOX
+				--================================================--
+
+				local hitboxLabel = label(
+					settings,
+					"📦 Tamanho da Hitbox: " .. hitboxSize,
+					UDim2.new(1, -20, 0, 25),
+					UDim2.new(0, 10, 0, 255),
+					11,
+					TEXT
+				)
+
+				local hitboxBox = Instance.new("TextBox")
+
+				hitboxBox.Size = UDim2.new(1, -20, 0, 38)
+				hitboxBox.Position = UDim2.new(0, 10, 0, 280)
+
+				hitboxBox.BackgroundColor3 = CARD
+				hitboxBox.BorderSizePixel = 0
+
+				hitboxBox.Text = tostring(hitboxSize)
+				hitboxBox.PlaceholderText = "Digite de 1 até 200"
+				hitboxBox.PlaceholderColor3 = SUB
+
+				hitboxBox.TextColor3 = TEXT
+				hitboxBox.TextSize = 12
+				hitboxBox.Font = Enum.Font.Gotham
+
+				hitboxBox.ClearTextOnFocus = false
+
+				hitboxBox.Parent = settings
+
+				addCorner(hitboxBox, 8)
+				addStroke(hitboxBox)
+
+				hitboxBox.FocusLost:Connect(function()
+
+					local value =
+						tonumber(hitboxBox.Text)
+
+					if value then
+
+						value = math.clamp(
+							math.floor(value),
+							1,
+							200
+						)
+
+						hitboxSize = value
+
+						hitboxBox.Text =
+							tostring(hitboxSize)
+
+						hitboxLabel.Text =
+							"📦 Tamanho da Hitbox: " ..
+							hitboxSize
+
+						-- Atualiza hitboxes já aplicadas
+						for plr, _ in pairs(playerHitboxes) do
+
+							local character = plr.Character
+							local root =
+								character and character:FindFirstChild("HumanoidRootPart")
+
+							if root then
+
+								root.Size = Vector3.new(
+									hitboxSize,
+									hitboxSize,
+									hitboxSize
+								)
+
+							end
+
+						end
+
+					else
+
+						hitboxBox.Text =
+							tostring(hitboxSize)
+
+					end
+
+				end)
+
+				--================================================--
+				-- DISCORD
+				--================================================--
+
+				local dcBox = Instance.new("TextBox")
+
+				dcBox.Size = UDim2.new(1, -20, 0, 42)
+				dcBox.Position = UDim2.new(0, 10, 0, 85)
+
+				dcBox.BackgroundColor3 = CARD
+				dcBox.BorderSizePixel = 0
+
+				dcBox.Text = DISCORD_LINK
+
+				dcBox.TextColor3 =
+					Color3.fromRGB(100, 160, 255)
+
+				dcBox.TextSize = 11
+				dcBox.Font = Enum.Font.Gotham
+
+				dcBox.TextEditable = false
+				dcBox.ClearTextOnFocus = false
+
+				dcBox.TextXAlignment =
+					Enum.TextXAlignment.Center
+
+				dcBox.Parent = dcPage
+
+				addCorner(dcBox, 8)
+
+				local copyButton = button(
+					dcPage,
+					"💬 COPIAR LINK DO DISCORD",
+					UDim2.new(1, -20, 0, 42),
+					UDim2.new(0, 10, 0, 140),
+					Color3.fromRGB(65, 75, 150)
+				)
+
+				copyButton.MouseButton1Click:Connect(function()
+
+					if typeof(setclipboard) == "function" then
+
+						setclipboard(DISCORD_LINK)
+
+						notify(
+							"💬 Link do Discord copiado!"
+						)
+
+					else
+
+						notify(
+							"Copie o link mostrado acima."
+						)
+
+					end
+
+				end)
+
+				--================================================--
+				-- MENU
+				--================================================--
+
+				local menu = {
+
+					{"🏠  Início", home, 80},
+					{"⚡  FPS Booster", fps, 125},
+					{"🎮  Jogo", gamePage, 170},
+					{"⚙  Configurações", settings, 215},
+					{"💬  Discord", dcPage, 260}
+
+				}
+
+				local function showPage(target)
+
+					for _, p in pairs(pages) do
+						p.Visible = false
+					end
+
+					target.Visible = true
+
+				end
+
+				for _, item in ipairs(menu) do
+
+					local b = button(
+						sidebar,
+						item[1],
+						UDim2.new(1, -20, 0, 35),
+						UDim2.new(0, 10, 0, item[3]),
+						Color3.fromRGB(25, 29, 40)
+					)
+
+					b.TextXAlignment =
+						Enum.TextXAlignment.Left
+
+					local padding = Instance.new("UIPadding")
+
+					padding.PaddingLeft =
+						UDim.new(0, 10)
+
+					padding.Parent = b
+
+					b.MouseButton1Click:Connect(function()
+
+						showPage(item[2])
+
+					end)
+
+				end
+
+				--================================================--
+				-- FOV CIRCLE
+				--================================================--
+
+				fovCircle = Instance.new("Frame")
+
+				fovCircle.Name = "TXZZ_FOV"
+				fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+
+				fovCircle.Position =
+					UDim2.new(0.5, 0, 0.5, 0)
+
+				fovCircle.Size =
+					UDim2.fromOffset(fovSize, fovSize)
+
+				fovCircle.BackgroundTransparency = 1
+				fovCircle.BorderSizePixel = 0
+
+				fovCircle.ZIndex = 2
+				fovCircle.Visible = fovVisible
+
+				fovCircle.Parent = gui
+
+				addCorner(fovCircle, 999)
+
+				local fovStroke =
+					Instance.new("UIStroke")
+
+				fovStroke.Color =
+					Color3.fromRGB(255, 40, 40)
+
+				fovStroke.Thickness = 2
+				fovStroke.Transparency = 0
+
+				fovStroke.Parent = fovCircle
+
+				--================================================--
+				-- LOGO FLUTUANTE
+				--================================================--
+
+				launcher = Instance.new("ImageButton")
+
+				launcher.Name = "TXZZ76_Launcher"
+
+				launcher.Size =
+					UDim2.fromOffset(62, 62)
+
+				launcher.Position =
+					UDim2.new(0, 20, 0.5, -31)
+
+				launcher.BackgroundColor3 =
+					PANEL
+
+				launcher.BorderSizePixel = 0
+
+				launcher.Image = LOGO_ID
+				launcher.ScaleType = Enum.ScaleType.Fit
+
+				launcher.AutoButtonColor = true
+				launcher.ZIndex = 10
+
+				launcher.Parent = gui
+
+				addCorner(launcher, 31)
+				addStroke(launcher)
+
+				--================================================--
+				-- ARRASTAR LOGO
+				--================================================--
+
+				do
+
+					local dragging = false
+					local dragStart
+					local startPosition
+
+					launcher.InputBegan:Connect(function(input)
+
+						if input.UserInputType ==
+							Enum.UserInputType.MouseButton1
+							or input.UserInputType ==
+							Enum.UserInputType.Touch then
+
+							dragging = true
+							dragStart = input.Position
+							startPosition = launcher.Position
+
+							input.Changed:Connect(function()
+
+								if input.UserInputState ==
+									Enum.UserInputState.End then
+
+									dragging = false
+
+								end
+
+							end)
+
+						end
+
+					end)
+
+					UserInputService.InputChanged:Connect(function(input)
+
+						if not dragging then
+							return
+						end
+
+						if input.UserInputType ~=
+							Enum.UserInputType.MouseMovement
+							and input.UserInputType ~=
+							Enum.UserInputType.Touch then
+
+							return
+
+						end
+
+						local delta =
+							input.Position - dragStart
+
+						launcher.Position = UDim2.new(
+							startPosition.X.Scale,
+							startPosition.X.Offset + delta.X,
+
+							startPosition.Y.Scale,
+							startPosition.Y.Offset + delta.Y
+						)
+
+					end)
+
+				end
+
+				--================================================--
+				-- ABRIR / FECHAR PELO LOGO
+				--================================================--
+
+				launcher.MouseButton1Click:Connect(function()
+
+					if mainPanel then
+
+						mainPanel.Visible =
+							not mainPanel.Visible
+
+					end
+
+				end)
+
+				--================================================--
+				-- ATUALIZAÇÃO DO FOV
+				--================================================--
+
+				task.spawn(function()
+
+					while gui.Parent do
+
+						if fovCircle then
+
+							fovCircle.Size =
+								UDim2.fromOffset(
+									fovSize,
+									fovSize
+								)
+
+							fovCircle.Visible =
+								fovVisible
+
+						end
+
+						task.wait(0.05)
+
+					end
+
+				end)
+
+				notify(
+					"Painel carregado: " .. data[2]
+				)
+
+			end)
+
+		end)
 
 	end
 
-	status.TextColor3 = Color3.fromRGB(180,185,255)
+	--========================================================--
+	-- PESQUISA
+	--========================================================--
 
-end)
+	search:GetPropertyChangedSignal("Text"):Connect(function()
 
---==================================================
--- DASHBOARD
---==================================================
+		local query =
+			string.lower(search.Text)
 
-local dashboard = Instance.new("Frame")
+		for _, item in ipairs(items) do
 
-dashboard.Name = "Dashboard"
+			if query == ""
+				or string.find(
+					item.name,
+					query,
+					1,
+					true
+				) then
 
-dashboard.Size = UDim2.fromOffset(620,370)
-dashboard.Position = UDim2.new(0.5,-310,0.5,-185)
+				item.button.Visible = true
 
-dashboard.BackgroundColor3 = Color3.fromRGB(8,8,10)
-dashboard.BorderSizePixel = 0
+			else
 
-dashboard.Visible = false
-dashboard.ClipsDescendants = true
+				item.button.Visible = false
 
-dashboard.Parent = gui
+			end
 
-corner(dashboard,8)
-
-stroke(
-	dashboard,
-	Color3.fromRGB(150,0,0),
-	0.15,
-	1
-)
-
---==================================================
--- HEADER
---==================================================
-
-local header = Instance.new("Frame")
-
-header.Size = UDim2.new(1,0,0,46)
-header.BackgroundColor3 = Color3.fromRGB(12,12,15)
-header.BorderSizePixel = 0
-
-header.Parent = dashboard
-
---==================================================
--- FOTO DO PLAYER
---==================================================
-
-local playerIcon = Instance.new("ImageLabel")
-
-playerIcon.Size = UDim2.fromOffset(34,34)
-playerIcon.Position = UDim2.fromOffset(10,6)
-
-playerIcon.BackgroundColor3 = Color3.fromRGB(155,0,0)
-playerIcon.BorderSizePixel = 0
-
-playerIcon.Parent = header
-
-corner(playerIcon,9)
-
-task.spawn(function()
-
-	local success, image = pcall(function()
-
-		return Players:GetUserThumbnailAsync(
-			player.UserId,
-			Enum.ThumbnailType.HeadShot,
-			Enum.ThumbnailSize.Size100x100
-		)
+		end
 
 	end)
 
-	if success then
-		playerIcon.Image = image
-	else
-		playerIcon.Image = ICON_IMAGE
-	end
-
-end)
-
---==================================================
--- NOME DO PLAYER
---==================================================
-
-local playerName = Instance.new("TextLabel")
-
-playerName.Size = UDim2.fromOffset(130,18)
-playerName.Position = UDim2.fromOffset(54,5)
-
-playerName.BackgroundTransparency = 1
-
-playerName.Text = player.DisplayName
-
-playerName.TextColor3 = Color3.fromRGB(235,235,235)
-
-playerName.TextSize = 11
-playerName.Font = Enum.Font.GothamBold
-
-playerName.TextXAlignment = Enum.TextXAlignment.Left
-
-playerName.Parent = header
-
-local playerUser = Instance.new("TextLabel")
-
-playerUser.Size = UDim2.fromOffset(130,14)
-playerUser.Position = UDim2.fromOffset(54,23)
-
-playerUser.BackgroundTransparency = 1
-
-playerUser.Text = "@" .. player.Name
-
-playerUser.TextColor3 = Color3.fromRGB(105,105,115)
-
-playerUser.TextSize = 8
-playerUser.Font = Enum.Font.Gotham
-
-playerUser.TextXAlignment = Enum.TextXAlignment.Left
-
-playerUser.Parent = header
-
---==================================================
--- TÍTULO
---==================================================
-
-local dashTitle = Instance.new("TextLabel")
-
-dashTitle.Size = UDim2.fromOffset(180,46)
-dashTitle.Position = UDim2.fromOffset(190,0)
-
-dashTitle.BackgroundTransparency = 1
-
-dashTitle.Text = "TXZZ 76 • PAINEL"
-
-dashTitle.TextColor3 = Color3.fromRGB(230,230,235)
-
-dashTitle.TextSize = 17
-dashTitle.Font = Enum.Font.GothamBold
-
-dashTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-dashTitle.Parent = header
-
---==================================================
--- MINIMIZAR
---==================================================
-
-local minimizeButton = Instance.new("TextButton")
-
-minimizeButton.Size = UDim2.fromOffset(30,30)
-minimizeButton.Position = UDim2.new(1,-68,0,8)
-
-minimizeButton.BackgroundColor3 = Color3.fromRGB(45,45,52)
-minimizeButton.BorderSizePixel = 0
-
-minimizeButton.Text = "—"
-
-minimizeButton.TextColor3 = Color3.new(1,1,1)
-minimizeButton.TextSize = 15
-minimizeButton.Font = Enum.Font.GothamBold
-
-minimizeButton.Parent = header
-
-corner(minimizeButton,7)
-
---==================================================
--- FECHAR
---==================================================
-
-local closeButton = Instance.new("TextButton")
-
-closeButton.Size = UDim2.fromOffset(30,30)
-closeButton.Position = UDim2.new(1,-34,0,8)
-
-closeButton.BackgroundColor3 = Color3.fromRGB(125,20,25)
-closeButton.BorderSizePixel = 0
-
-closeButton.Text = "X"
-
-closeButton.TextColor3 = Color3.new(1,1,1)
-closeButton.TextSize = 12
-closeButton.Font = Enum.Font.GothamBold
-
-closeButton.Parent = header
-
-corner(closeButton,7)
-
---==================================================
--- BOTÃO TXZZ FLUTUANTE
---==================================================
-
-local mobileButton = Instance.new("ImageButton")
-
-mobileButton.Name = "TXZZOpenButton"
-
-mobileButton.Size = UDim2.fromOffset(58,58)
-mobileButton.Position = UDim2.fromOffset(15,90)
-
-mobileButton.BackgroundColor3 = Color3.fromRGB(145,0,0)
-mobileButton.BorderSizePixel = 0
-
-mobileButton.Image = ICON_IMAGE
-mobileButton.ScaleType = Enum.ScaleType.Crop
-
-mobileButton.Visible = false
-
-mobileButton.Parent = gui
-
-corner(mobileButton,12)
-
-stroke(
-	mobileButton,
-	Color3.fromRGB(220,30,30),
-	0.1,
-	1
-)
-
---==================================================
--- TEXTO TXZZ
---==================================================
-
-local txzzText = Instance.new("TextLabel")
-
-txzzText.Size = UDim2.new(1,0,0,14)
-txzzText.Position = UDim2.new(0,0,1,-15)
-
-txzzText.BackgroundColor3 = Color3.fromRGB(0,0,0)
-txzzText.BackgroundTransparency = 0.25
-
-txzzText.Text = "TXZZ"
-
-txzzText.TextColor3 = Color3.new(1,1,1)
-
-txzzText.TextSize = 8
-txzzText.Font = Enum.Font.GothamBold
-
-txzzText.Parent = mobileButton
-
-corner(txzzText,5)
-
---==================================================
--- BOTÃO FLUTUANTE ARRASTÁVEL
---==================================================
-
-makeDraggable(mobileButton, mobileButton)
-
---==================================================
--- SIDEBAR
---==================================================
-
-local sidebar = Instance.new("Frame")
-
-sidebar.Size = UDim2.fromOffset(150,310)
-sidebar.Position = UDim2.fromOffset(10,54)
-
-sidebar.BackgroundColor3 = Color3.fromRGB(10,10,13)
-sidebar.BorderSizePixel = 0
-
-sidebar.Parent = dashboard
-
-corner(sidebar,6)
-
-local sideTitle = Instance.new("TextLabel")
-
-sideTitle.Size = UDim2.new(1,-14,0,25)
-sideTitle.Position = UDim2.fromOffset(7,6)
-
-sideTitle.BackgroundTransparency = 1
-
-sideTitle.Text = "MENU"
-
-sideTitle.TextColor3 = Color3.fromRGB(110,110,120)
-
-sideTitle.TextSize = 10
-sideTitle.Font = Enum.Font.GothamBold
-
-sideTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-sideTitle.Parent = sidebar
-
-local sideLayout = Instance.new("UIListLayout")
-
-sideLayout.Padding = UDim.new(0,4)
-sideLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-sideLayout.Parent = sidebar
-
-sideTitle.LayoutOrder = 0
-
---==================================================
--- CATEGORIAS
---==================================================
-
-local function category(text, order)
-
-	local button = Instance.new("TextButton")
-
-	button.Size = UDim2.new(1,-12,0,32)
-
-	button.BackgroundColor3 = Color3.fromRGB(18,18,22)
-	button.BorderSizePixel = 0
-
-	button.Text = "  " .. text
-
-	button.TextColor3 = Color3.fromRGB(190,190,195)
-
-	button.TextSize = 10
-	button.Font = Enum.Font.GothamSemibold
-
-	button.TextXAlignment = Enum.TextXAlignment.Left
-
-	button.LayoutOrder = order
-
-	button.Parent = sidebar
-
-	corner(button,5)
-
-	return button
-
 end
 
-local home = category("MAIN",1)
-local rivals = category("RIVALS",2)
-local morteNegra = category("MORTE NEGRA",3)
-local settings = category("SETTINGS",4)
+--========================================================--
+-- AIMBOT PLAYER
+-- CORRIGIDO PARA MIRAR NA HEAD
+--========================================================--
 
---==================================================
--- CONTEÚDO
---==================================================
+local function getPlayerHead(plr)
 
-local content = Instance.new("Frame")
+	if not plr or plr == player then
+		return nil
+	end
 
-content.Size = UDim2.new(1,-170,1,-64)
-content.Position = UDim2.fromOffset(160,54)
+	local character = plr.Character
 
-content.BackgroundColor3 = Color3.fromRGB(12,12,15)
-content.BorderSizePixel = 0
+	if not character then
+		return nil
+	end
 
-content.Parent = dashboard
+	local humanoid =
+		character:FindFirstChildOfClass("Humanoid")
 
-corner(content,6)
+	local head =
+		character:FindFirstChild("Head")
 
-local pageTitle = Instance.new("TextLabel")
+	if not humanoid
+		or humanoid.Health <= 0
+		or not head then
 
-pageTitle.Size = UDim2.new(1,-20,0,28)
-pageTitle.Position = UDim2.fromOffset(10,7)
+		return nil
 
-pageTitle.BackgroundTransparency = 1
+	end
 
-pageTitle.Text = "MAIN"
+	return head
+end
 
-pageTitle.TextColor3 = Color3.fromRGB(235,235,235)
+--========================================================--
+-- ENCONTRAR PLAYER NO FOV
+--========================================================--
 
-pageTitle.TextSize = 14
-pageTitle.Font = Enum.Font.GothamBold
+local function getTargetInFOV()
 
-pageTitle.TextXAlignment = Enum.TextXAlignment.Left
+	local camera = workspace.CurrentCamera
 
-pageTitle.Parent = content
+	if not camera then
+		return nil
+	end
 
-local pageInfo = Instance.new("TextLabel")
-
-pageInfo.Size = UDim2.new(1,-20,0,18)
-pageInfo.Position = UDim2.fromOffset(10,32)
-
-pageInfo.BackgroundTransparency = 1
-
-pageInfo.Text = "Painel TXZZ • PC + CELULAR"
-
-pageInfo.TextColor3 = Color3.fromRGB(110,110,120)
-
-pageInfo.TextSize = 10
-pageInfo.Font = Enum.Font.Gotham
-
-pageInfo.TextXAlignment = Enum.TextXAlignment.Left
-
-pageInfo.Parent = content
-
---==================================================
--- OPÇÕES
---==================================================
-
-local options = Instance.new("ScrollingFrame")
-
-options.Size = UDim2.new(1,-20,1,-58)
-options.Position = UDim2.fromOffset(10,54)
-
-options.BackgroundTransparency = 1
-options.BorderSizePixel = 0
-
-options.ScrollBarThickness = 3
-
-options.CanvasSize = UDim2.new()
-
-options.Parent = content
-
-local optionLayout = Instance.new("UIListLayout")
-
-optionLayout.Padding = UDim.new(0,6)
-optionLayout.Parent = options
-
-optionLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-
-	options.CanvasSize = UDim2.fromOffset(
-		0,
-		optionLayout.AbsoluteContentSize.Y + 8
+	local center = Vector2.new(
+		camera.ViewportSize.X / 2,
+		camera.ViewportSize.Y / 2
 	)
 
-end)
+	local bestTarget = nil
+	local bestDistance = math.huge
 
---==================================================
--- LIMPAR OPÇÕES
---==================================================
+	for _, plr in ipairs(Players:GetPlayers()) do
 
-local function clearOptions()
+		if plr ~= player then
 
-	for _, child in ipairs(options:GetChildren()) do
+			local head =
+				getPlayerHead(plr)
 
-		if child:IsA("Frame") then
-			child:Destroy()
+			if head then
+
+				local screenPosition, visible =
+					camera:WorldToViewportPoint(
+						head.Position
+					)
+
+				if visible and screenPosition.Z > 0 then
+
+					local targetPosition =
+						Vector2.new(
+							screenPosition.X,
+							screenPosition.Y
+						)
+
+					local distance =
+						(
+							targetPosition - center
+						).Magnitude
+
+					if distance <=
+						(fovSize / 2) then
+
+						if distance < bestDistance then
+
+							bestDistance =
+								distance
+
+							bestTarget =
+								plr
+
+						end
+
+					end
+
+				end
+
+			end
+
 		end
 
 	end
 
+	return bestTarget
 end
 
---==================================================
--- ADICIONAR OPÇÃO
---==================================================
+--========================================================--
+-- AIMBOT RENDER
+--========================================================--
 
-local function addOption(titleText, descText)
+RunService:BindToRenderStep(
+	"TXZZ76_Aimbot",
+	Enum.RenderPriority.Camera.Value + 1,
+	function()
 
-	local row = Instance.new("Frame")
+		if not aimbotEnabled then
 
-	row.Size = UDim2.new(1,-4,0,48)
+			currentAimTarget = nil
+			return
 
-	row.BackgroundColor3 = Color3.fromRGB(18,18,22)
-	row.BorderSizePixel = 0
+		end
 
-	row.Parent = options
+		local camera =
+			workspace.CurrentCamera
 
-	corner(row,5)
+		if not camera then
+			return
+		end
 
-	local title = Instance.new("TextLabel")
+		--================================================--
+		-- MANTÉM O ALVO ATUAL
+		--================================================--
 
-	title.Size = UDim2.new(1,-70,0,18)
-	title.Position = UDim2.fromOffset(9,5)
+		local head =
+			getPlayerHead(currentAimTarget)
 
-	title.BackgroundTransparency = 1
+		--================================================--
+		-- SE O ALVO MORREU/DESAPARECEU,
+		-- PROCURA OUTRO
+		--================================================--
 
-	title.Text = titleText
+		if not head then
 
-	title.TextColor3 = Color3.fromRGB(220,220,225)
+			currentAimTarget =
+				getTargetInFOV()
 
-	title.TextSize = 11
-	title.Font = Enum.Font.GothamSemibold
+			head =
+				getPlayerHead(
+					currentAimTarget
+				)
 
-	title.TextXAlignment = Enum.TextXAlignment.Left
+		end
 
-	title.Parent = row
+		--================================================--
+		-- MIRA EXATAMENTE NA CABEÇA
+		--================================================--
 
-	local desc = Instance.new("TextLabel")
+		if head then
 
-	desc.Size = UDim2.new(1,-78,0,14)
-	desc.Position = UDim2.fromOffset(9,24)
+			local headPosition =
+				head.Position
 
-	desc.BackgroundTransparency = 1
+			camera.CFrame =
+				CFrame.lookAt(
+					camera.CFrame.Position,
+					headPosition
+				)
 
-	desc.Text = descText
-
-	desc.TextColor3 = Color3.fromRGB(105,105,115)
-
-	desc.TextSize = 9
-	desc.Font = Enum.Font.Gotham
-
-	desc.TextXAlignment = Enum.TextXAlignment.Left
-
-	desc.Parent = row
-
-	local button = Instance.new("TextButton")
-
-	button.Size = UDim2.fromOffset(45,22)
-	button.Position = UDim2.new(1,-54,0.5,-11)
-
-	button.BackgroundColor3 = Color3.fromRGB(45,45,52)
-	button.BorderSizePixel = 0
-
-	button.Text = states[titleText] and "ON" or "OFF"
-
-	button.TextColor3 = states[titleText]
-		and Color3.new(1,1,1)
-		or Color3.fromRGB(170,170,175)
-
-	button.TextSize = 9
-	button.Font = Enum.Font.GothamBold
-
-	button.Parent = row
-
-	corner(button,11)
-
-	if states[titleText] then
-
-		button.BackgroundColor3 =
-			Color3.fromRGB(150,0,0)
+		end
 
 	end
+)
 
-	button.Activated:Connect(function()
+--========================================================--
+-- HITBOX PLAYER
+--========================================================--
 
-		states[titleText] =
-			not states[titleText]
+Players.PlayerAdded:Connect(function(plr)
 
-		if states[titleText] then
+	if plr == player then
+		return
+	end
 
-			button.Text = "ON"
+	plr.CharacterAdded:Connect(function(character)
 
-			button.BackgroundColor3 =
-				Color3.fromRGB(150,0,0)
+		task.wait(0.5)
 
-			button.TextColor3 =
-				Color3.new(1,1,1)
+		if not character.Parent then
+			return
+		end
 
-		else
+		local root =
+			character:FindFirstChild("HumanoidRootPart")
 
-			button.Text = "OFF"
+		if not root then
+			return
+		end
 
-			button.BackgroundColor3 =
-				Color3.fromRGB(45,45,52)
+		if not playerHitboxes[plr] then
 
-			button.TextColor3 =
-				Color3.fromRGB(170,170,175)
+			playerHitboxes[plr] = {
+				Size = root.Size,
+				Transparency = root.Transparency
+			}
 
 		end
 
 	end)
 
-end
-
---==================================================
--- MOSTRAR PÁGINA
---==================================================
-
-local function showPage(titleText,infoText,list)
-
-	pageTitle.Text = titleText
-	pageInfo.Text = infoText
-
-	clearOptions()
-
-	for _, item in ipairs(list) do
-
-		addOption(
-			item[1],
-			item[2]
-		)
-
-	end
-
-	options.CanvasPosition =
-		Vector2.new(0,0)
-
-end
-
---==================================================
--- MAIN
---==================================================
-
-home.Activated:Connect(function()
-
-	showPage(
-		"MAIN",
-		"Informações do painel",
-		{
-
-			{
-				"Status",
-				"Painel TXZZ carregado."
-			},
-
-			{
-				"Jogador",
-				player.DisplayName
-			},
-
-			{
-				"Usuário",
-				"@" .. player.Name
-			},
-
-			{
-				"Key",
-				"Validade de 24 horas."
-			},
-
-			{
-				"Plataforma",
-				"PC + Celular."
-			}
-
-		}
-	)
-
 end)
 
---==================================================
--- RIVALS
---==================================================
-
-rivals.Activated:Connect(function()
-
-	showPage(
-		"RIVALS",
-		"Todas as opções começam OFF",
-		{
-
-			{
-				"Mira Cabeça",
-				"Recurso do seu próprio jogo."
-			},
-
-			{
-				"Priorizar Cabeça",
-				"Prioridade do alvo."
-			},
-
-			{
-				"Atravessa Parede",
-				"Configuração visual autorizada."
-			},
-
-			{
-				"Pulo Alto",
-				"Controle de pulo."
-			},
-
-			{
-				"Pulo Duplo",
-				"Segundo salto."
-			},
-
-			{
-				"Pulo Triplo",
-				"Terceiro salto."
-			},
-
-			{
-				"Sem Dano Queda",
-				"Proteção contra queda."
-			},
-
-			{
-				"Anti Empurrão",
-				"Controle de física."
-			},
-
-			{
-				"Linhas ESP",
-				"Visualização do próprio jogo."
-			},
-
-			{
-				"Caixa Corpo",
-				"Caixa visual."
-			},
-
-			{
-				"Nome + Vida",
-				"Informações do jogador."
-			}
-
-		}
-	)
-
-end)
-
---==================================================
--- MORTE NEGRA
---==================================================
-
-morteNegra.Activated:Connect(function()
-
-	showPage(
-		"MORTE NEGRA",
-		"Todas as opções começam OFF",
-		{
-
-			{
-				"Sem Dano",
-				"Proteção implementada pelo seu jogo."
-			},
-
-			{
-				"Habilidades Infinitas",
-				"Controle das habilidades."
-			},
-
-			{
-				"Gruda e Não Desgruda",
-				"Sistema de alvo."
-			},
-
-			{
-				"AFK Matador",
-				"Automação do próprio jogo."
-			},
-
-			{
-				"Voar",
-				"Sistema de voo."
-			},
-
-			{
-				"Velocidade",
-				"Velocidade configurável."
-			},
-
-			{
-				"Super Pulo",
-				"Pulo aumentado."
-			},
-
-			{
-				"Linhas Inimigo",
-				"Visualização dos inimigos."
-			},
-
-			{
-				"Caixa Corpo MN",
-				"Caixa visual."
-			},
-
-			{
-				"Mostrar Nome",
-				"Nome do jogador."
-			},
-
-			{
-				"Mostrar Vida",
-				"Barra de vida."
-			}
-
-		}
-	)
-
-end)
-
---==================================================
--- SETTINGS
---==================================================
-
-settings.Activated:Connect(function()
-
-	showPage(
-		"SETTINGS",
-		"Configurações do painel",
-		{
-
-			{
-				"Notificações",
-				"Ativar notificações."
-			},
-
-			{
-				"Animações",
-				"Ativar animações."
-			},
-
-			{
-				"Modo Compacto",
-				"Reduzir tamanho do painel."
-			}
-
-		}
-	)
-
-end)
-
---==================================================
--- ARRASTAR PAINEL
---==================================================
-
-makeDraggable(
-	dashboard,
-	header
-)
-
---==================================================
--- ARRASTAR KEY
---==================================================
-
-makeDraggable(
-	keyPage,
-	keyHeader
-)
-
---==================================================
--- ABRIR BOTÃO TXZZ
---==================================================
-
-mobileButton.Activated:Connect(function()
-
-	dashboard.Visible = true
-	mobileButton.Visible = false
-
-end)
-
---==================================================
--- MINIMIZAR PAINEL
---==================================================
-
-minimizeButton.Activated:Connect(function()
-
-	dashboard.Visible = false
-	mobileButton.Visible = true
-
-end)
-
---==================================================
--- FECHAR PAINEL
---==================================================
-
-closeButton.Activated:Connect(function()
-
-	dashboard.Visible = false
-	mobileButton.Visible = true
-
-end)
-
---==================================================
--- MINIMIZAR KEY
---==================================================
-
-keyMinimize.Activated:Connect(function()
-
-	keyPage.Visible = false
-	mobileButton.Visible = true
-
-end)
-
---==================================================
--- FECHAR KEY
---==================================================
-
-keyClose.Activated:Connect(function()
-
-	keyPage.Visible = false
-	mobileButton.Visible = true
-
-end)
-
---==================================================
--- ABRIR DASHBOARD
---==================================================
-
-local function openDashboard()
-
-	keyPage.Visible = false
-	dashboard.Visible = true
-	mobileButton.Visible = false
-
-	showPage(
-		"MAIN",
-		"Informações do painel",
-		{
-
-			{
-				"Status",
-				"Painel TXZZ carregado."
-			},
-
-			{
-				"Jogador",
-				player.DisplayName
-			},
-
-			{
-				"Usuário",
-				"@" .. player.Name
-			},
-
-			{
-				"Key",
-				"Validade de 24 horas."
-			},
-
-			{
-				"Plataforma",
-				"PC + Celular."
-			}
-
-		}
-	)
-
-end
-
---==================================================
--- VALIDAR KEY
---==================================================
-
-validate.Activated:Connect(function()
-
-	local enteredKey =
-		keyBox.Text:gsub(
+--========================================================--
+-- VERIFICAR KEY
+--========================================================--
+
+verify.MouseButton1Click:Connect(function()
+
+	local typedKey =
+		string.gsub(
+			keyBox.Text,
 			"^%s*(.-)%s*$",
 			"%1"
 		)
 
-	if enteredKey == KEY_CORRETA then
+	if typedKey == KEY_CORRETA then
 
-		keyExpiresAt =
-			os.time() + KEY_DURATION
+		keyVerified = true
 
-		status.Text =
-			"KEY VÁLIDA! 24 HORAS"
+		keyVerifiedAt =
+			os.date(
+				"%d/%m/%Y às %H:%M:%S"
+			)
 
-		status.TextColor3 =
-			Color3.fromRGB(0,255,120)
+		notify(
+			"✓ Key verificada em " ..
+			keyVerifiedAt
+		)
+
+		verify.Text =
+			"✓ KEY VERIFICADA"
+
+		verify.BackgroundColor3 =
+			GREEN
 
 		task.wait(0.5)
 
-		openDashboard()
+		openSelector()
 
 	else
 
-		status.Text =
-			"KEY INVÁLIDA!"
+		notify(
+			"✕ Key incorreta."
+		)
 
-		status.TextColor3 =
-			Color3.fromRGB(255,60,60)
+		keyBox.Text = ""
 
 	end
 
 end)
 
---==================================================
--- ANIMAÇÃO INICIAL
---==================================================
+--========================================================--
+-- DISCORD DA KEY
+--========================================================--
 
-local originalSize = keyPage.Size
+discord.MouseButton1Click:Connect(function()
 
-keyPage.Size =
-	UDim2.fromOffset(0,0)
+	if typeof(setclipboard) == "function" then
 
-animate(
-	keyPage,
-	0.4,
-	{
-		Size = originalSize
-	}
+		setclipboard(DISCORD_LINK)
+
+		notify(
+			"💬 Link do Discord copiado!"
+		)
+
+	else
+
+		notify(
+			"Copie o link exibido abaixo."
+		)
+
+	end
+
+end)
+
+--========================================================--
+-- FINAL
+--========================================================--
+
+notify(
+	"TXZZ 76 V8 carregado."
 )
-
---==================================================
--- INICIAL
---==================================================
-
-showPage(
-	"MAIN",
-	"Informações do painel",
-	{
-
-		{
-			"Status",
-			"Aguardando validação da key."
-		},
-
-		{
-			"Jogador",
-			player.DisplayName
-		},
-
-		{
-			"Usuário",
-			"@" .. player.Name
-		},
-
-		{
-			"Plataforma",
-			"PC + Celular."
-		}
-
-	}
-)
-
-print("====================================")
-print("TXZZ 76 • PAINEL")
-print("PC + CELULAR")
-print("KEY SYSTEM ATIVO")
-print("RIVALS: OFF")
-print("MORTE NEGRA: OFF")
-print("====================================")
