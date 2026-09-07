@@ -9,7 +9,7 @@ iData.value5 = game:GetService("Lighting")
 iData.value6 = game:GetService("HttpService")
 
 local _ = iData.value1.LocalPlayer
-if isfile and isfile("RXZ_HUB.json") then
+if isfile and isfile("TXZZ76_HUB.json") then
 	local ok, result = pcall(function()
 		local secondaryResult = iData.value6
 		local data = { readfile("RXZ_HUB.json") }
@@ -41,7 +41,7 @@ task.spawn(function()
 
 	pcall(function()
 		for _, item in ipairs({
-			"VoidVS_Intro",
+			"TXZZ76_Intro",
 			"BerserkVS_Intro",
 		}) do
 			local firstChild = game:GetService("CoreGui"):FindFirstChild(item)
@@ -62,7 +62,7 @@ task.spawn(function()
 			end
 		end
 	end)
-	flagData.value3 = "https://files.catbox.moe/rq2ilr.png"
+	flagData.value3 = https://cdn.discordapp.com/attachments/1515734757890068674/1546641402115526717/Screenshot_20260907-1859332.jpg?ex=6aa0858d&is=6a9f340d&hm=8617bbe0dd76fe1675ea483b096d4a40cdeb6fe0a7f3df9c2be50beb47b5403f&
 
 	local function handleFlag()
 		local flagResult
@@ -3127,7 +3127,7 @@ function espMakeLabel(player)
 		Instance.new("UICorner", ImageLabel).CornerRadius = UDim.new(1, 0)
 	end
 	local billboardGui = Instance.new("BillboardGui")
-	billboardGui.Name = "VoidESPSpeed"
+	billboardGui.Name = "TXZZ76ESPSpeed"
 	billboardGui.AlwaysOnTop = true
 	billboardGui.Size = UDim2.new(0, 200, 0, 44)
 	billboardGui.StudsOffset = Vector3.new(0, not studsOffsetFlag and 3.6 or 3, 0)
@@ -3149,7 +3149,7 @@ function espMakeLabel(player)
 	local Part
 	if not studsOffsetFlag then
 		Highlight = Instance.new("Highlight")
-		Highlight.Name = "VoidChams"
+		Highlight.Name = "TXZZ76Chams"
 		Highlight.Adornee = Character
 		Highlight.FillColor = Color3.fromRGB(255, 255, 255)
 		Highlight.FillTransparency = 0.55
@@ -3160,7 +3160,7 @@ function espMakeLabel(player)
 			Highlight.Parent = iData.value110.folder or workspace
 		end)
 		Part = Instance.new("Part")
-		Part.Name = "VoidESPLine"
+		Part.Name = "TXZZ76ESPLine"
 		Part.Anchored = true
 		Part.CanCollide = false
 		Part.CanQuery = false
@@ -3258,7 +3258,7 @@ function startESP()
 	iData.value108 = true
 	espClear()
 	iData.value110.folder = Instance.new("Folder")
-	iData.value110.folder.Name = "VoidESPFolder"
+	iData.value110.folder.Name = "TXZZ76ESPFolder"
 	pcall(function()
 		iData.value110.folder.Parent = workspace
 	end)
@@ -3321,8 +3321,8 @@ function stopESP()
 			local condition = descendant:IsA("BillboardGui")
 
 			if condition then
-				condition = descendant.Name == "VoidESPAvatar"
-					or (descendant.Name == "VoidESPSpeed" or descendant.Name:find("VoidESP"))
+				condition = descendant.Name == "TXZZ76ESPAvatar"
+					or (descendant.Name == "TXZZ76SPSpeed" or descendant.Name:find("TXZZ76ESP"))
 			end
 
 			if condition then
@@ -3355,7 +3355,7 @@ function stopESP()
 		end
 	end)
 end
-iData.value118 = "RXZ_BtnPos.json"
+iData.value118 = "TXZZ76_BtnPos.json"
 function loadBtnPositions()
 	if not isfile or not isfile(iData.value118) then
 		return {}
