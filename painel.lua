@@ -1,485 +1,507 @@
---========================================================--
---                    TXZZ HUB                            --
---          OVO -> BASE / TELEGUIADO + LOOP              --
---========================================================--
+-- script in discord.gg/sabcom
 
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+if not game:IsLoaded() then game.Loaded:Wait() end
 
-local Player = Players.LocalPlayer
+local flashid = "rbxassetid://70883871260184"
+local TP = 2.5
+local PRIO = Enum.AnimationPriority.Action4
+local BIG = 25
 
---========================================================--
--- CONFIG
---========================================================--
+local plrs = game:GetService("Players")
+local uis = game:GetService("UserInputService")
+local hs = game:GetService("HttpService")
+local ts = game:GetService("TweenService")
 
-local EggPoint = workspace:WaitForChild("EggPoint")
-local BasePoint = workspace:WaitForChild("BasePoint")
+local lp = plrs.LocalPlayer
+while not lp do
+    task.wait()
+    lp = plrs.LocalPlayer
+end
+if not lp.Character then lp.CharacterAdded:Wait() end
+lp.Character:WaitForChild("Humanoid")
 
-local TELEPORT_DELAY = 1.5
-local RETURN_DELAY = 2
+local F = "sabcomflash.json"
+local cfg = { flash = false, spam = false, anti = false, w = 0.03, s = 0.2, px = 50, py = 130 }
 
-local TeleGuiado = false
-local Loop = false
-local Running = false
-
---========================================================--
--- GUI
---========================================================--
-
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "TXZZ_HUB"
-Gui.ResetOnSpawn = false
-Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Gui.Parent = Player:WaitForChild("PlayerGui")
-
-local BG = Color3.fromRGB(10,17,12)
-local BOX = Color3.fromRGB(13,21,15)
-local GREEN = Color3.fromRGB(28,210,85)
-local GREEN2 = Color3.fromRGB(80,255,120)
-local WHITE = Color3.fromRGB(240,245,240)
-
---========================================================--
--- BOTÃO FLUTUANTE
---========================================================--
-
-local OpenButton = Instance.new("TextButton")
-OpenButton.Size = UDim2.fromOffset(72,72)
-OpenButton.Position = UDim2.new(0,25,0.5,-36)
-OpenButton.BackgroundColor3 = BG
-OpenButton.Text = "TXZZ"
-OpenButton.TextColor3 = GREEN2
-OpenButton.TextSize = 17
-OpenButton.Font = Enum.Font.GothamBlack
-OpenButton.AutoButtonColor = false
-OpenButton.Parent = Gui
-
-local OC = Instance.new("UICorner")
-OC.CornerRadius = UDim.new(1,0)
-OC.Parent = OpenButton
-
-local OS = Instance.new("UIStroke")
-OS.Color = GREEN
-OS.Thickness = 2
-OS.Parent = OpenButton
-
---========================================================--
--- PAINEL
---========================================================--
-
-local Main = Instance.new("Frame")
-Main.Size = UDim2.fromOffset(550,390)
-Main.Position = UDim2.new(0.5,-275,0.5,-195)
-Main.BackgroundColor3 = BG
-Main.BackgroundTransparency = 0.05
-Main.BorderSizePixel = 0
-Main.Parent = Gui
-
-local MC = Instance.new("UICorner")
-MC.CornerRadius = UDim.new(0,22)
-MC.Parent = Main
-
-local MS = Instance.new("UIStroke")
-MS.Color = Color3.fromRGB(25,170,70)
-MS.Thickness = 2
-MS.Parent = Main
-
---========================================================--
--- CABEÇALHO
---========================================================--
-
-local Logo = Instance.new("Frame")
-Logo.Size = UDim2.fromOffset(54,54)
-Logo.Position = UDim2.fromOffset(18,15)
-Logo.BackgroundColor3 = Color3.fromRGB(22,32,23)
-Logo.Parent = Main
-
-local LC = Instance.new("UICorner")
-LC.CornerRadius = UDim.new(1,0)
-LC.Parent = Logo
-
-local LS = Instance.new("UIStroke")
-LS.Color = GREEN
-LS.Parent = Logo
-
-local LT = Instance.new("TextLabel")
-LT.Size = UDim2.fromScale(1,1)
-LT.BackgroundTransparency = 1
-LT.Text = "TX"
-LT.TextColor3 = GREEN2
-LT.TextSize = 18
-LT.Font = Enum.Font.GothamBlack
-LT.Parent = Logo
-
-local Title = Instance.new("TextLabel")
-Title.Position = UDim2.fromOffset(88,13)
-Title.Size = UDim2.new(1,-220,0,30)
-Title.BackgroundTransparency = 1
-Title.Text = "TXZZ HUB"
-Title.TextColor3 = WHITE
-Title.TextSize = 22
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Main
-
-local Sub = Instance.new("TextLabel")
-Sub.Position = UDim2.fromOffset(90,41)
-Sub.Size = UDim2.new(1,-220,0,20)
-Sub.BackgroundTransparency = 1
-Sub.Text = "BEST EGG SYSTEM"
-Sub.TextColor3 = Color3.fromRGB(95,135,100)
-Sub.TextSize = 11
-Sub.Font = Enum.Font.GothamMedium
-Sub.TextXAlignment = Enum.TextXAlignment.Left
-Sub.Parent = Main
-
---========================================================--
--- DISCORD
---========================================================--
-
-local Discord = Instance.new("TextButton")
-Discord.Size = UDim2.fromOffset(50,50)
-Discord.Position = UDim2.new(1,-112,0,15)
-Discord.BackgroundColor3 = Color3.fromRGB(80,85,220)
-Discord.Text = "DC"
-Discord.TextColor3 = WHITE
-Discord.TextSize = 15
-Discord.Font = Enum.Font.GothamBlack
-Discord.AutoButtonColor = false
-Discord.Parent = Main
-
-local DC = Instance.new("UICorner")
-DC.CornerRadius = UDim.new(1,0)
-DC.Parent = Discord
-
-Discord.MouseButton1Click:Connect(function()
-	if setclipboard then
-		setclipboard("https://discord.gg/cYKwrDjfKk")
-	end
-end)
-
---========================================================--
--- FECHAR
---========================================================--
-
-local Close = Instance.new("TextButton")
-Close.Size = UDim2.fromOffset(42,42)
-Close.Position = UDim2.new(1,-54,0,19)
-Close.BackgroundColor3 = Color3.fromRGB(30,40,32)
-Close.Text = "×"
-Close.TextColor3 = Color3.fromRGB(180,195,180)
-Close.TextSize = 25
-Close.Font = Enum.Font.GothamMedium
-Close.AutoButtonColor = false
-Close.Parent = Main
-
-local CC = Instance.new("UICorner")
-CC.CornerRadius = UDim.new(1,0)
-CC.Parent = Close
-
-Close.MouseButton1Click:Connect(function()
-	Main.Visible = false
-end)
-
-OpenButton.MouseButton1Click:Connect(function()
-	Main.Visible = not Main.Visible
-end)
-
---========================================================--
--- BEST EGG
---========================================================--
-
-local EggCard = Instance.new("Frame")
-EggCard.Size = UDim2.new(1,-32,0,104)
-EggCard.Position = UDim2.fromOffset(16,88)
-EggCard.BackgroundColor3 = Color3.fromRGB(12,20,14)
-EggCard.BorderSizePixel = 0
-EggCard.Parent = Main
-
-local EC = Instance.new("UICorner")
-EC.CornerRadius = UDim.new(0,18)
-EC.Parent = EggCard
-
-local EggIcon = Instance.new("TextLabel")
-EggIcon.Size = UDim2.fromOffset(72,72)
-EggIcon.Position = UDim2.fromOffset(12,16)
-EggIcon.BackgroundColor3 = Color3.fromRGB(5,9,6)
-EggIcon.Text = "🥚"
-EggIcon.TextSize = 37
-EggIcon.Parent = EggCard
-
-local EIC = Instance.new("UICorner")
-EIC.CornerRadius = UDim.new(0,14)
-EIC.Parent = EggIcon
-
-local Best = Instance.new("TextLabel")
-Best.Position = UDim2.fromOffset(100,16)
-Best.Size = UDim2.new(1,-200,0,20)
-Best.BackgroundTransparency = 1
-Best.Text = "BEST EGG"
-Best.TextColor3 = Color3.fromRGB(115,140,120)
-Best.TextSize = 11
-Best.Font = Enum.Font.GothamBold
-Best.TextXAlignment = Enum.TextXAlignment.Left
-Best.Parent = EggCard
-
-local EggName = Instance.new("TextLabel")
-EggName.Position = UDim2.fromOffset(100,38)
-EggName.Size = UDim2.new(1,-200,0,27)
-EggName.BackgroundTransparency = 1
-EggName.Text = "SEU OVO"
-EggName.TextColor3 = WHITE
-EggName.TextSize = 17
-EggName.Font = Enum.Font.GothamBold
-EggName.TextXAlignment = Enum.TextXAlignment.Left
-EggName.Parent = EggCard
-
-local Type = Instance.new("TextLabel")
-Type.Position = UDim2.fromOffset(100,66)
-Type.Size = UDim2.new(1,-200,0,20)
-Type.BackgroundTransparency = 1
-Type.Text = "SECRET"
-Type.TextColor3 = Color3.fromRGB(150,70,255)
-Type.TextSize = 12
-Type.Font = Enum.Font.GothamBold
-Type.TextXAlignment = Enum.TextXAlignment.Left
-Type.Parent = EggCard
-
---========================================================--
--- FUNÇÃO DE TELEPORTE
---========================================================--
-
-local function TeleportTo(Point)
-
-	local Character = Player.Character
-	if not Character then return false end
-
-	local Root = Character:FindFirstChild("HumanoidRootPart")
-	if not Root then return false end
-
-	Character:PivotTo(Point.CFrame + Vector3.new(0,4,0))
-
-	return true
+if isfile and isfile(F) then
+    local ok, d = pcall(function() return hs:JSONDecode(readfile(F)) end)
+    if ok and type(d) == "table" then
+        for k, v in pairs(d) do
+            if cfg[k] ~= nil then cfg[k] = v end
+        end
+    end
 end
 
---========================================================--
--- ROTA OVO -> BASE
---========================================================--
+if type(cfg.px) ~= "number" then cfg.px = 50 end
+if type(cfg.py) ~= "number" then cfg.py = 130 end
 
-local function FazerRota()
-
-	if Running then return end
-
-	Running = true
-
-	while TeleGuiado do
-
-		-- 1. Vai até o ovo
-		TeleportTo(EggPoint)
-
-		task.wait(TELEPORT_DELAY)
-
-		--================================================
-		-- AQUI É O MOMENTO DE COLETA DO OVO
-		--
-		-- Se o seu sistema de ovos usar uma função
-		-- específica para entregar/resgatar, ela entra aqui.
-		--================================================
-
-		task.wait(0.5)
-
-		-- 2. Volta para a base
-		TeleportTo(BasePoint)
-
-		task.wait(RETURN_DELAY)
-
-		-- 3. Se LOOP estiver desligado, para
-		if not Loop then
-			break
-		end
-	end
-
-	Running = false
+local function save()
+    pcall(function()
+        if writefile then writefile(F, hs:JSONEncode(cfg)) end
+    end)
 end
 
---========================================================--
--- TOGGLE
---========================================================--
+local Theme = {
+    Bg       = Color3.fromRGB(8, 8, 10),
+    Panel    = Color3.fromRGB(14, 14, 16),
+    Row      = Color3.fromRGB(18, 18, 22),
+    Accent   = Color3.fromRGB(125, 211, 252),
+    On       = Color3.fromRGB(56, 189, 248),
+    Off      = Color3.fromRGB(22, 22, 26),
+    Text     = Color3.fromRGB(248, 250, 252),
+    Dim      = Color3.fromRGB(148, 163, 184),
+}
 
-local function CreateToggle(Name, Description, Y, Callback)
-
-	local Box = Instance.new("Frame")
-	Box.Size = UDim2.new(1,-32,0,76)
-	Box.Position = UDim2.fromOffset(16,Y)
-	Box.BackgroundColor3 = BOX
-	Box.BorderSizePixel = 0
-	Box.Parent = Main
-
-	local BC = Instance.new("UICorner")
-	BC.CornerRadius = UDim.new(0,17)
-	BC.Parent = Box
-
-	local Label = Instance.new("TextLabel")
-	Label.Position = UDim2.fromOffset(20,12)
-	Label.Size = UDim2.new(1,-115,0,25)
-	Label.BackgroundTransparency = 1
-	Label.Text = Name
-	Label.TextColor3 = WHITE
-	Label.TextSize = 15
-	Label.Font = Enum.Font.GothamBold
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-	Label.Parent = Box
-
-	local Desc = Instance.new("TextLabel")
-	Desc.Position = UDim2.fromOffset(20,39)
-	Desc.Size = UDim2.new(1,-115,0,20)
-	Desc.BackgroundTransparency = 1
-	Desc.Text = Description
-	Desc.TextColor3 = Color3.fromRGB(85,105,88)
-	Desc.TextSize = 10
-	Desc.Font = Enum.Font.GothamMedium
-	Desc.TextXAlignment = Enum.TextXAlignment.Left
-	Desc.Parent = Box
-
-	local Toggle = Instance.new("TextButton")
-	Toggle.Size = UDim2.fromOffset(66,36)
-	Toggle.Position = UDim2.new(1,-88,0.5,-18)
-	Toggle.BackgroundColor3 = Color3.fromRGB(31,43,34)
-	Toggle.Text = ""
-	Toggle.AutoButtonColor = false
-	Toggle.Parent = Box
-
-	local TC = Instance.new("UICorner")
-	TC.CornerRadius = UDim.new(1,0)
-	TC.Parent = Toggle
-
-	local Circle = Instance.new("Frame")
-	Circle.Size = UDim2.fromOffset(28,28)
-	Circle.Position = UDim2.fromOffset(4,4)
-	Circle.BackgroundColor3 = Color3.fromRGB(170,185,172)
-	Circle.Parent = Toggle
-
-	local CC2 = Instance.new("UICorner")
-	CC2.CornerRadius = UDim.new(1,0)
-	CC2.Parent = Circle
-
-	local Enabled = false
-
-	Toggle.MouseButton1Click:Connect(function()
-
-		Enabled = not Enabled
-
-		if Enabled then
-
-			TweenService:Create(
-				Toggle,
-				TweenInfo.new(0.18),
-				{BackgroundColor3 = GREEN}
-			):Play()
-
-			TweenService:Create(
-				Circle,
-				TweenInfo.new(0.18),
-				{Position = UDim2.new(1,-32,0,4)}
-			):Play()
-
-		else
-
-			TweenService:Create(
-				Toggle,
-				TweenInfo.new(0.18),
-				{BackgroundColor3 = Color3.fromRGB(31,43,34)}
-			):Play()
-
-			TweenService:Create(
-				Circle,
-				TweenInfo.new(0.18),
-				{Position = UDim2.fromOffset(4,4)}
-			):Play()
-		end
-
-		Callback(Enabled)
-	end)
+local function corner(inst, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 8)
+    c.Parent = inst
+    return c
 end
 
---========================================================--
--- TELEGUIADO
---========================================================--
+local function stroke(inst, col, thick, trans)
+    local e = Instance.new("UIStroke")
+    e.Color = col or Theme.Accent
+    e.Thickness = thick or 1
+    e.Transparency = trans or 0.35
+    e.Parent = inst
+    return e
+end
 
-CreateToggle(
-	"TELEGUIADO",
-	"ONE SHOT",
-	205,
-	function(State)
+local function tween(inst, props, t)
+    ts:Create(inst, TweenInfo.new(t or 0.14, Enum.EasingStyle.Quad), props):Play()
+end
 
-		TeleGuiado = State
+local tracks = {}
+local err, togup = "off", {}
 
-		if State then
-			task.spawn(FazerRota)
-		end
-	end
-)
+local skinok = false
 
---========================================================--
--- LOOP
---========================================================--
+local function checkskin()
+    local chr = lp.Character
+    if not chr then return end
+    local ut = chr:FindFirstChild("UpperTorso")
+    if not ut then return end
+    local ok, v = pcall(function() return ut.HasSkinnedMesh end)
+    if ok and v then skinok = true end
+end
 
-CreateToggle(
-	"LOOP",
-	"AUTOMATIC",
-	289,
-	function(State)
+local function hasskin()
+    return skinok
+end
 
-		Loop = State
+local function setstat()
+end
 
-		if State and TeleGuiado then
-			task.spawn(FazerRota)
-		end
-	end
-)
+local function stopflash()
+    for _, t in ipairs(tracks) do
+        pcall(function() t:AdjustWeight(0, 0) end)
+        pcall(function() t:Stop(0) end)
+        pcall(function() t:Destroy() end)
+    end
+    tracks = {}
+end
 
---========================================================--
--- ARRASTAR PAINEL
---========================================================--
+local function startflash()
+    stopflash()
+    local chr = lp.Character
+    if not chr then err = "no character" setstat() return end
+    local anm = chr:FindFirstChildWhichIsA("Animator", true)
+    if not anm then err = "no animator" setstat() return end
+    if not anm.LoadAnimationCoreScript then
+        err = "no LoadAnimationCoreScript"
+        warn("[sabcom flash] " .. err)
+        setstat()
+        return
+    end
+    local a = Instance.new("Animation")
+    a.AnimationId = flashid
+    local ok, t = pcall(function() return anm:LoadAnimationCoreScript(a) end)
+    if not ok or not t then
+        err = tostring(t)
+        warn("[sabcom flash] load failed: " .. err)
+        setstat()
+        return
+    end
+    t:Play()
+    t.Priority = PRIO
+    t.Looped = true
+    t:AdjustSpeed(cfg.spam and cfg.s or 0)
+    t:AdjustWeight(cfg.w)
+    t.TimePosition = TP
+    tracks[1] = t
+    err = ""
+    setstat()
+end
 
-local Dragging = false
-local DragStart
-local StartPosition
+local function restart()
+    if not cfg.flash then return end
+    stopflash()
+    task.wait(0.05)
+    startflash()
+end
 
-Main.InputBegan:Connect(function(Input)
+local function apply()
+    if cfg.flash and not hasskin() then
+        cfg.flash = false
+        if togup.flash then togup.flash() end
+        save()
+    end
+    if not cfg.flash then
+        stopflash()
+        err = "off"
+        setstat()
+        return
+    end
+    if #tracks == 0 then startflash() return end
+    for _, t in ipairs(tracks) do
+        pcall(function()
+            t:AdjustSpeed(cfg.spam and cfg.s or 0)
+            t:AdjustWeight(cfg.w)
+        end)
+    end
+end
 
-	if Input.UserInputType == Enum.UserInputType.MouseButton1
-	or Input.UserInputType == Enum.UserInputType.Touch then
+local map
 
-		Dragging = true
-		DragStart = Input.Position
-		StartPosition = Main.Position
-	end
+local function donor()
+    if map then return map end
+    map = {}
+    pcall(function()
+        local r = plrs:CreateHumanoidModelFromDescription(
+            Instance.new("HumanoidDescription"), Enum.HumanoidRigType.R15)
+        for _, d in ipairs(r:GetChildren()) do
+            if d:IsA("MeshPart") then map[d.Name] = d.MeshId end
+        end
+        r:Destroy()
+    end)
+    return map
+end
+
+local done = setmetatable({}, { __mode = "k" })
+local orig = setmetatable({}, { __mode = "k" })
+
+local function unskin(c)
+    if done[c] then return end
+    done[c] = true
+    local mp = donor()
+    for _, d in ipairs(c:GetChildren()) do
+        if d:IsA("MeshPart") and mp[d.Name] then
+            pcall(function()
+                if d.HasSkinnedMesh then
+                    if orig[d] == nil then orig[d] = d.MeshId end
+                    d.MeshId = mp[d.Name]
+                    d.HasSkinnedMesh = false
+                end
+            end)
+        end
+    end
+end
+
+local function reskin()
+    for d, id in pairs(orig) do
+        pcall(function()
+            d.MeshId = id
+            d.HasSkinnedMesh = true
+        end)
+    end
+    table.clear(orig)
+    table.clear(done)
+end
+
+local function huge(c)
+    local ok, s = pcall(function() return c:GetExtentsSize() end)
+    return ok and s and (s.X > BIG or s.Y > BIG or s.Z > BIG)
+end
+
+task.spawn(function()
+    while task.wait(0.4) do
+        if cfg.anti then
+            for _, v in ipairs(plrs:GetPlayers()) do
+                if v.Character and huge(v.Character) then
+                    pcall(unskin, v.Character)
+                end
+            end
+        end
+    end
 end)
 
-UIS.InputChanged:Connect(function(Input)
-
-	if not Dragging then return end
-
-	if Input.UserInputType == Enum.UserInputType.MouseMovement
-	or Input.UserInputType == Enum.UserInputType.Touch then
-
-		local Delta = Input.Position - DragStart
-
-		Main.Position = UDim2.new(
-			StartPosition.X.Scale,
-			StartPosition.X.Offset + Delta.X,
-			StartPosition.Y.Scale,
-			StartPosition.Y.Offset + Delta.Y
-		)
-	end
+lp.CharacterAdded:Connect(function(c)
+    c:WaitForChild("Humanoid")
+    skinok = false
+    checkskin()
+    task.wait(1.5)
+    checkskin()
+    tracks = {}
+    apply()
 end)
 
-UIS.InputEnded:Connect(function(Input)
-
-	if Input.UserInputType == Enum.UserInputType.MouseButton1
-	or Input.UserInputType == Enum.UserInputType.Touch then
-
-		Dragging = false
-	end
+local guiParent = (gethui and gethui()) or game:GetService("CoreGui")
+pcall(function()
+    local old = guiParent:FindFirstChild("SabcomFlasher")
+    if old then old:Destroy() end
 end)
+
+local sg = Instance.new("ScreenGui")
+sg.Name = "SabcomFlasher"
+sg.ResetOnSpawn = false
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.Parent = guiParent
+
+local PW, PH = 228, 196
+
+local m = Instance.new("Frame")
+m.Name = "Panel"
+m.Size = UDim2.new(0, PW, 0, PH)
+m.Position = UDim2.new(0, cfg.px, 0, cfg.py)
+m.BackgroundColor3 = Theme.Bg
+m.BorderSizePixel = 0
+m.Parent = sg
+corner(m, 10)
+stroke(m, Theme.Accent, 1, 0.42)
+
+local bar = Instance.new("Frame")
+bar.Size = UDim2.new(1, 0, 0, 28)
+bar.BackgroundColor3 = Theme.Panel
+bar.BorderSizePixel = 0
+bar.Parent = m
+corner(bar, 10)
+
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.new(1, 0, 0, 10)
+barFill.Position = UDim2.new(0, 0, 1, -10)
+barFill.BackgroundColor3 = Theme.Panel
+barFill.BorderSizePixel = 0
+barFill.Parent = bar
+
+local dot = Instance.new("Frame")
+dot.Size = UDim2.new(0, 6, 0, 6)
+dot.Position = UDim2.new(0, 10, 0.5, -3)
+dot.BackgroundColor3 = Theme.Accent
+dot.BorderSizePixel = 0
+dot.Parent = bar
+corner(dot, 3)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -118, 1, 0)
+title.Position = UDim2.new(0, 22, 0, 0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 12
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextColor3 = Theme.Text
+title.Text = "sabcom flasher"
+title.Parent = bar
+
+local brand = Instance.new("TextLabel")
+brand.Size = UDim2.new(0, 92, 1, 0)
+brand.Position = UDim2.new(1, -100, 0, 0)
+brand.BackgroundTransparency = 1
+brand.Font = Enum.Font.Gotham
+brand.TextSize = 9
+brand.TextXAlignment = Enum.TextXAlignment.Right
+brand.TextColor3 = Theme.Dim
+brand.Text = "discord.gg/sabcom"
+brand.Parent = bar
+
+local function savepos()
+    cfg.px = math.floor(m.Position.X.Offset + 0.5)
+    cfg.py = math.floor(m.Position.Y.Offset + 0.5)
+    save()
+end
+
+do
+    local ds, sp, dg
+    bar.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then
+            dg = true ds = i.Position sp = m.Position
+        end
+    end)
+    uis.InputChanged:Connect(function(i)
+        if dg and (i.UserInputType == Enum.UserInputType.MouseMovement
+            or i.UserInputType == Enum.UserInputType.Touch) then
+            local d = i.Position - ds
+            m.Position = UDim2.new(0, sp.X.Offset + d.X, 0, sp.Y.Offset + d.Y)
+        end
+    end)
+    uis.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then
+            if dg then savepos() end
+            dg = false
+        end
+    end)
+end
+
+local function mktog(y, txt, key, fn)
+    local b = Instance.new("TextButton")
+    b.Position = UDim2.new(0, 8, 0, y)
+    b.Size = UDim2.new(1, -16, 0, 24)
+    b.BorderSizePixel = 0
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 11
+    b.TextColor3 = Theme.Text
+    b.AutoButtonColor = false
+    b.Parent = m
+    corner(b, 6)
+
+    local pill = Instance.new("Frame")
+    pill.Size = UDim2.new(0, 30, 0, 14)
+    pill.Position = UDim2.new(1, -38, 0.5, -7)
+    pill.BorderSizePixel = 0
+    pill.Parent = b
+    corner(pill, 7)
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 10, 0, 10)
+    knob.Position = UDim2.new(0, 2, 0.5, -5)
+    knob.BorderSizePixel = 0
+    knob.BackgroundColor3 = Theme.Text
+    knob.Parent = pill
+    corner(knob, 5)
+
+    local function up()
+        local on = cfg[key]
+        tween(b, { BackgroundColor3 = on and Color3.fromRGB(10, 24, 34) or Theme.Off })
+        tween(pill, { BackgroundColor3 = on and Theme.On or Color3.fromRGB(48, 50, 58) })
+        tween(knob, { Position = on and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5) })
+        b.Text = "  " .. txt
+        b.TextXAlignment = Enum.TextXAlignment.Left
+    end
+    togup[key] = up
+    b.MouseButton1Click:Connect(function()
+        cfg[key] = not cfg[key]
+        up()
+        save()
+        apply()
+        up()
+        if fn then fn() end
+    end)
+    b.MouseEnter:Connect(function()
+        tween(b, { BackgroundColor3 = cfg[key] and Color3.fromRGB(14, 32, 44) or Color3.fromRGB(28, 28, 34) })
+    end)
+    b.MouseLeave:Connect(up)
+    up()
+end
+
+local function mksld(y, txt, key, mn, mx, st, ph)
+    local row = Instance.new("Frame")
+    row.Position = UDim2.new(0, 8, 0, y)
+    row.Size = UDim2.new(1, -16, 0, 32)
+    row.BackgroundColor3 = Theme.Off
+    row.BorderSizePixel = 0
+    row.Parent = m
+    corner(row, 6)
+
+    local l = Instance.new("TextLabel")
+    l.Position = UDim2.new(0, 8, 0, 3)
+    l.Size = UDim2.new(0, 90, 0, 12)
+    l.BackgroundTransparency = 1
+    l.Font = Enum.Font.Gotham
+    l.TextSize = 10
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.TextColor3 = Theme.Dim
+    l.Text = txt
+    l.Parent = row
+
+    local tb = Instance.new("TextBox")
+    tb.Position = UDim2.new(1, -50, 0, 3)
+    tb.Size = UDim2.new(0, 42, 0, 12)
+    tb.BackgroundTransparency = 1
+    tb.Font = Enum.Font.GothamBold
+    tb.TextSize = 10
+    tb.TextXAlignment = Enum.TextXAlignment.Right
+    tb.TextColor3 = Theme.Text
+    tb.ClearTextOnFocus = true
+    tb.PlaceholderText = ph
+    tb.PlaceholderColor3 = Color3.fromRGB(100, 110, 122)
+    tb.Parent = row
+
+    local b = Instance.new("Frame")
+    b.Position = UDim2.new(0, 8, 0, 18)
+    b.Size = UDim2.new(1, -16, 0, 5)
+    b.BackgroundColor3 = Theme.Row
+    b.BorderSizePixel = 0
+    b.Parent = row
+    corner(b, 3)
+
+    local f = Instance.new("Frame")
+    f.BackgroundColor3 = Theme.Accent
+    f.BorderSizePixel = 0
+    f.Parent = b
+    corner(f, 3)
+
+    local k = Instance.new("Frame")
+    k.Size = UDim2.new(0, 10, 0, 10)
+    k.BackgroundColor3 = Theme.Text
+    k.BorderSizePixel = 0
+    k.Parent = b
+    corner(k, 5)
+
+    local function refresh()
+        local rel = (cfg[key] - mn) / (mx - mn)
+        f.Size = UDim2.new(rel, 0, 1, 0)
+        k.Position = UDim2.new(rel, -5, 0.5, -5)
+        tb.Text = string.format("%.2f", cfg[key])
+    end
+
+    local function put(v)
+        v = math.floor(v / st + 0.5) * st
+        cfg[key] = math.clamp(v, mn, mx)
+        refresh()
+        save()
+        apply()
+    end
+
+    local function set(x)
+        local rel = math.clamp((x - b.AbsolutePosition.X) / b.AbsoluteSize.X, 0, 1)
+        put(mn + rel * (mx - mn))
+    end
+
+    local sl
+    b.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then
+            sl = true set(i.Position.X)
+        end
+    end)
+    k.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then
+            sl = true set(i.Position.X)
+        end
+    end)
+    uis.InputChanged:Connect(function(i)
+        if sl and (i.UserInputType == Enum.UserInputType.MouseMovement
+            or i.UserInputType == Enum.UserInputType.Touch) then
+            set(i.Position.X)
+        end
+    end)
+    uis.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then sl = false end
+    end)
+
+    tb.FocusLost:Connect(function()
+        local n = tonumber(tb.Text)
+        if n then put(n) else refresh() end
+    end)
+
+    refresh()
+end
+
+mktog(34, "FLASH", "flash")
+mktog(60, "SPAM", "spam", restart)
+mktog(86, "ANTI FLASH", "anti", function()
+    if not cfg.anti then reskin() end
+end)
+
+mksld(116, "SIZE", "w", 0.01, 1, 0.01, "0.03")
+mksld(152, "SPAM SPEED", "s", 0.05, 2, 0.05, "0.20")
+
+checkskin()
+task.wait(0.5)
+checkskin()
+apply()
+setstat()
