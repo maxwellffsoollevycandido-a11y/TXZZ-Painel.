@@ -62,7 +62,7 @@ task.spawn(function()
 			end
 		end
 	end)
-	flagData.value3 = https://cdn.discordapp.com/attachments/1515734757890068674/1546641402115526717/Screenshot_20260907-1859332.jpg?ex=6aa0858d&is=6a9f340d&hm=8617bbe0dd76fe1675ea483b096d4a40cdeb6fe0a7f3df9c2be50beb47b5403f&
+	flagData.value3 = https://files.catbox.moe/rq2ilr.png
 
 	local function handleFlag()
 		local flagResult
