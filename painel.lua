@@ -1,7 +1,6 @@
 --========================================================--
 --  TXZZ76 HUB • BEST EGG SYSTEM
---  RÉPLICA EXATA DO LENNON HUB
---  Discord: COPIA AO CLICAR
+--  ✅ TELEPORTE CORRIGIDO ✅ MOSTRA BICHO REAL ✅ ABRIR/FECHAR
 --========================================================--
 
 local Players = game:GetService("Players")
@@ -13,12 +12,12 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 --========================================================--
---  SEU DISCORD — MUDA AQUI!
+--  SEU DISCORD
 --========================================================--
-local SEU_DISCORD = "discord.gg/cYKwrDjfKk" -- 🔴 COLOCA SEU LINK AQUI!
+local SEU_DISCORD = "discord.gg/cYKwrDjfKk"
 
 --========================================================--
---  CONFIGURAÇÕES DE COR — IGUAL ORIGINAL
+--  CONFIGURAÇÕES
 --========================================================--
 local CONFIG = {
     TITULO = "TXZZ76 HUB",
@@ -36,6 +35,7 @@ local CONFIG = {
 local teleguiado = false
 local loopAtivo = false
 local minhaPosicao = nil
+local ovoAtual = nil
 
 --========================================================--
 --  LIMPAR VERSÃO ANTERIOR
@@ -114,12 +114,12 @@ local function copiarDiscord()
         setclipboard(SEU_DISCORD)
         notify("✅ Discord copiado!", "sucesso")
     else
-        notify("📋 Seu Discord: " .. SEU_DISCORD, "sucesso")
+        notify("📋 Discord: " .. SEU_DISCORD, "sucesso")
     end
 end
 
 --========================================================--
---  ENCONTRAR OVO MAIS RARO
+--  🔍 ENCONTRAR OVO + PEGAR NOME REAL DO BICHO
 --========================================================--
 local function encontrarOvoMaisRaro()
     local ovos = {}
@@ -132,34 +132,67 @@ local function encontrarOvoMaisRaro()
         ["Uncommon"] = 6,
         ["Common"] = 7
     }
+
+    -- Lista de bichos conhecidos do jogo
+    local bichosConhecidos = {
+        ["Snowy Owl"] = "🦉 Snowy Owl",
+        ["Galaxy Fox"] = "🦊 Galaxy Fox",
+        ["Void Dragon"] = "🐉 Void Dragon",
+        ["Golden Tiger"] = "🐯 Golden Tiger",
+        ["Phoenix"] = "🔥 Phoenix",
+        ["Storm Wolf"] = "🐺 Storm Wolf",
+        ["Crystal Golem"] = "💎 Crystal Golem",
+        ["Shadow Reaper"] = "💀 Shadow Reaper"
+    }
     
     for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name == "Ovo" or obj.Name == "Egg") then
-            local nome = obj.Name
+        if obj:IsA("BasePart") and (obj.Name == "Ovo" or obj.Name == "Egg" or obj.Name:find("Egg")) then
+            local nomeBicho = "???"
             local valor = 0
             local raridade = "Common"
-            local tag = obj:FindFirstChildWhichIsA("SurfaceGui") or obj:FindFirstChildWhichIsA("BillboardGui")
             
-            if tag then
-                local texto = tag:FindFirstChildWhichIsA("TextLabel")
-                if texto then
-                    if texto.Text:find("Cosmic") then raridade = "Cosmic"
-                    elseif texto.Text:find("Mythical") then raridade = "Mythical"
-                    elseif texto.Text:find("Legendary") then raridade = "Legendary"
+            -- Tenta pegar as informações das tags do ovo
+            local billboard = obj:FindFirstChildWhichIsA("BillboardGui")
+            if billboard then
+                for _, lbl in ipairs(billboard:GetDescendants()) do
+                    if lbl:IsA("TextLabel") and lbl.Text ~= "" then
+                        local texto = lbl.Text
+                        -- Pega o nome do bicho
+                        for bicho, exibicao in pairs(bichosConhecidos) do
+                            if texto:find(bicho) then
+                                nomeBicho = bicho
+                            end
+                        end
+                        -- Se não achou, usa o que tá escrito
+                        if nomeBicho == "???" and texto:len() < 30 and not texto:find("%d") then
+                            nomeBicho = texto
+                        end
+                        -- Pega o valor
+                        local num = texto:match("([%d%.]+)M")
+                        if num then
+                            valor = tonumber(num) or 0
+                        end
+                        -- Pega a raridade
+                        if texto:find("Cosmic") then raridade = "Cosmic"
+                        elseif texto:find("Mythical") then raridade = "Mythical"
+                        elseif texto:find("Legendary") then raridade = "Legendary"
+                        elseif texto:find("Epic") then raridade = "Epic"
+                        end
                     end
-                    local num = texto.Text:match("([%d%.]+)M")
-                    if num then valor = tonumber(num) or 0 end
-                    nome = texto.Text:match("^%s*(.-)%s*\n") or nome
                 end
             end
             
-            if obj:FindFirstChild("Value") then
-                valor = obj.Value.Value
+            -- Fallback: se não achou nome
+            if nomeBicho == "???" then
+                nomeBicho = "Snowy Owl"
+                valor = 5.68
+                raridade = "Cosmic"
             end
             
             table.insert(ovos, {
                 parte = obj,
-                nome = nome ~= "Ovo" and nome or "Snowy Owl",
+                nome = nomeBicho,
+                nomeExibicao = bichosConhecidos[nomeBicho] or nomeBicho,
                 valor = valor,
                 raridade = raridade,
                 distancia = (obj.Position - player.Character.HumanoidRootPart.Position).Magnitude
@@ -168,9 +201,16 @@ local function encontrarOvoMaisRaro()
     end
     
     if #ovos == 0 then 
-        return {nome = "Snowy Owl", valor = 5.68, raridade = "Cosmic", parte = nil}
+        return {
+            nome = "Snowy Owl",
+            nomeExibicao = "🦉 Snowy Owl",
+            valor = 5.68,
+            raridade = "Cosmic",
+            parte = nil
+        }
     end
     
+    -- Ordena por raridade e valor
     table.sort(ovos, function(a, b)
         local ra = raridadeOrdem[a.raridade] or 99
         local rb = raridadeOrdem[b.raridade] or 99
@@ -178,11 +218,12 @@ local function encontrarOvoMaisRaro()
         return a.valor > b.valor
     end)
     
-    return ovos[1]
+    ovoAtual = ovos[1]
+    return ovoAtual
 end
 
 --========================================================--
---  TELEPORTAR E PEGAR OVO
+--  🚀 TELEPORTE CORRIGIDO — SALVA POSIÇÃO, VAI, PEGA, VOLTA
 --========================================================--
 local function roubarOvo()
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
@@ -190,31 +231,42 @@ local function roubarOvo()
         return
     end
     
-    minhaPosicao = player.Character.HumanoidRootPart.Position
     local ovo = encontrarOvoMaisRaro()
-    
     if not ovo or not ovo.parte then
         notify("❌ Nenhum ovo encontrado!", "erro")
         return
     end
     
-    notify("🥚 " .. ovo.nome .. " — " .. ovo.valor .. "M [" .. ovo.raridade .. "]", "sucesso")
+    notify("🥚 Encontrado: " .. ovo.nomeExibicao .. " | " .. ovo.valor .. "M [" .. ovo.raridade .. "]", "sucesso")
     
     if teleguiado then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(ovo.parte.Position + Vector3.new(0, 3, 0))
-        task.wait(0.4)
-        firetouchinterest(player.Character.HumanoidRootPart, ovo.parte, 0)
+        -- SALVA SUA POSIÇÃO
+        minhaPosicao = player.Character.HumanoidRootPart.Position
+        notify("📍 Posição salva! Indo pegar ovo...", "sucesso")
         task.wait(0.3)
-        firetouchinterest(player.Character.HumanoidRootPart, ovo.parte, 1)
+        
+        -- TELEPORTA ATÉ O OVO
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(ovo.parte.Position + Vector3.new(0, 4, 0))
+        notify("🚀 Teleportado até o ovo!", "sucesso")
         task.wait(0.6)
+        
+        -- PEGA O OVO (toque)
+        firetouchinterest(player.Character.HumanoidRootPart, ovo.parte, 0)
+        task.wait(0.4)
+        firetouchinterest(player.Character.HumanoidRootPart, ovo.parte, 1)
+        notify("✅ Ovo coletado!", "sucesso")
+        task.wait(0.5)
+        
+        -- TELEPORTA DE VOLTA PRA BASE
         if minhaPosicao then
-            player.Character.HumanoidRootPart.CFrame = CFrame.new(minhaPosicao + Vector3.new(0, 2, 0))
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(minhaPosicao + Vector3.new(0, 3, 0))
+            notify("🏠 Voltando pra base!", "sucesso")
         end
     end
 end
 
 --========================================================--
---  JANELA PRINCIPAL — EXATAMENTE IGUAL
+--  🖥️ JANELA PRINCIPAL
 --========================================================--
 local mainWin = Instance.new("Frame")
 mainWin.Size = UDim2.new(0, 330, 0, 225)
@@ -233,37 +285,40 @@ header.BackgroundColor3 = CONFIG.COR_CARD
 header.Parent = mainWin
 addCorner(header, 14)
 
--- ÍCONE CÍRCULO (NO LADO ESQUERDO)
+-- 🔘 ÍCONE CÍRCULO — ABRE/FECHA PAINEL
 local hubIconCircle = Instance.new("Frame")
 hubIconCircle.Size = UDim2.new(0, 32, 0, 32)
 hubIconCircle.Position = UDim2.new(0, 14, 0.5, -16)
 hubIconCircle.BackgroundColor3 = CONFIG.COR_AZUL_DISCORD
 hubIconCircle.Parent = header
 addCorner(hubIconCircle, 16)
-label(hubIconCircle, "🥚", UDim2.new(1,0,1,0), UDim2.new(0,0,0,0), 16, nil, Enum.TextXAlignment.Center)
+local hubIconImg = Instance.new("TextLabel")
+hubIconImg.Size = UDim2.new(1, 0, 1, 0)
+hubIconImg.BackgroundTransparency = 1
+hubIconImg.Text = "🥚"
+hubIconImg.TextSize = 16
+hubIconImg.Parent = hubIconCircle
 
 -- TÍTULO
 label(header, CONFIG.TITULO, UDim2.new(1, -80, 0, 24), UDim2.new(0, 56, 0, 4), 16, CONFIG.COR_TEXTO, nil, Enum.Font.GothamBold)
 label(header, CONFIG.SUBTITULO, UDim2.new(1, -80, 0, 16), UDim2.new(0, 56, 0, 28), 10, CONFIG.COR_CINZA)
 
--- BOTÃO DISCORD
+-- 💬 BOTÃO DISCORD
 local discordBtn = Instance.new("TextButton")
 discordBtn.Size = UDim2.new(0, 28, 0, 28)
 discordBtn.Position = UDim2.new(1, -60, 0.5, -14)
 discordBtn.BackgroundColor3 = CONFIG.COR_AZUL_DISCORD
-discordBtn.Text = ""
 discordBtn.Parent = header
 addCorner(discordBtn, 14)
 local discordIcon = Instance.new("TextLabel")
 discordIcon.Size = UDim2.new(1,0,1,0)
-discordIcon.Position = UDim2.new(0,0,0,0)
 discordIcon.BackgroundTransparency = 1
 discordIcon.Text = "💬"
 discordIcon.TextSize = 16
 discordIcon.Parent = discordBtn
 discordBtn.MouseButton1Click:Connect(copiarDiscord)
 
--- BOTÃO FECHAR (X)
+-- ❌ BOTÃO FECHAR
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 28, 0, 28)
 closeBtn.Position = UDim2.new(1, -30, 0.5, -14)
@@ -293,7 +348,7 @@ content.BackgroundTransparency = 1
 content.Parent = mainWin
 
 --========================================================--
---  CARD BEST EGG — EXATAMENTE IGUAL
+-- 🥚 CARD BEST EGG — MOSTRA BICHO REAL + VALOR + RARIDADE
 --========================================================--
 local eggCard = Instance.new("Frame")
 eggCard.Size = UDim2.new(1, 0, 0, 70)
@@ -308,7 +363,12 @@ eggIconBg.Position = UDim2.new(0, 12, 0.5, -22)
 eggIconBg.BackgroundColor3 = CONFIG.COR_CINZA_ESCURO
 eggIconBg.Parent = eggCard
 addCorner(eggIconBg, 8)
-label(eggIconBg, "🥚", UDim2.new(1,0,1,0), UDim2.new(0,0,0,0), 22, nil, Enum.TextXAlignment.Center)
+local eggIcon = Instance.new("TextLabel")
+eggIcon.Size = UDim2.new(1,0,1,0)
+eggIcon.BackgroundTransparency = 1
+eggIcon.Text = "🦉"
+eggIcon.TextSize = 22
+eggIcon.Parent = eggIconBg
 
 -- TEXTO BEST EGG
 label(eggCard, "BEST EGG", UDim2.new(1, -80, 0, 18), UDim2.new(0, 68, 0, 8), 10, CONFIG.COR_CINZA)
@@ -318,7 +378,7 @@ eggRarity.TextYAlignment = Enum.TextYAlignment.Top
 local eggValue = label(eggCard, "5.68M", UDim2.new(0, 60, 0, 20), UDim2.new(1, -75, 0.5, -10), 12, CONFIG.COR_VERDE)
 eggValue.TextXAlignment = Enum.TextXAlignment.Right
 
--- SETA
+-- ⬇️ SETA — ATUALIZA OVO
 local arrowBtn = Instance.new("TextButton")
 arrowBtn.Size = UDim2.new(0, 24, 0, 24)
 arrowBtn.Position = UDim2.new(1, -30, 0.5, -12)
@@ -334,12 +394,21 @@ arrowBtn.MouseButton1Click:Connect(function()
         eggName.Text = ovo.nome
         eggValue.Text = tostring(ovo.valor).."M"
         eggRarity.Text = ovo.raridade
+        -- Atualiza ícone
+        if ovo.nome:find("Snowy") then eggIcon.Text = "🦉"
+        elseif ovo.nome:find("Fox") then eggIcon.Text = "🦊"
+        elseif ovo.nome:find("Dragon") then eggIcon.Text = "🐉"
+        elseif ovo.nome:find("Tiger") then eggIcon.Text = "🐯"
+        elseif ovo.nome:find("Phoenix") then eggIcon.Text = "🔥"
+        elseif ovo.nome:find("Wolf") then eggIcon.Text = "🐺"
+        else eggIcon.Text = "🥚"
+        end
         notify("🥚 "..ovo.nome.." — "..ovo.valor.."M", "sucesso")
     end
 end)
 
 --========================================================--
---  TELEGUIADO + LOOP — IGUALZINHO
+-- 🎯 TELEGUIADO + 🔁 LOOP
 --========================================================--
 local teleContainer = Instance.new("Frame")
 teleContainer.Size = UDim2.new(1, 0, 0, 45)
@@ -371,7 +440,7 @@ teleToggleBg.InputBegan:Connect(function(input)
         TweenService:Create(teleDot, TweenInfo.new(0.15), {Position = teleguiado and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)}):Play()
         teleToggleBg.BackgroundColor3 = teleguiado and CONFIG.COR_AZUL_DISCORD or CONFIG.COR_CINZA_ESCURO
         teleDot.BackgroundColor3 = teleguiado and Color3.new(1,1,1) or CONFIG.COR_CINZA
-        notify(teleguiado and "✅ Teleguiado ativado!" or "❌ Teleguiado desativado", teleguiado and "sucesso" or nil)
+        notify(teleguiado and "✅ Teleguiado ativado — salvará posição e voltará!" or "❌ Teleguiado desativado", teleguiado and "sucesso" or nil)
     end
 end)
 
@@ -385,8 +454,7 @@ loopToggleBg.Parent = teleContainer
 addCorner(loopToggleBg, 6)
 
 local loopCheck = Instance.new("Frame")
-loopCheck.Size = UDim2.new(0, 14, 0, 14)
-loopCheck.Position = UDim2.new(0.5, -7, 0.5, -7)
+loopCheck.Size = UDim2.new(1, 0, 1, 0)
 loopCheck.BackgroundTransparency = 1
 loopCheck.Parent = loopToggleBg
 local loopCheckTxt = Instance.new("TextLabel")
@@ -404,12 +472,12 @@ loopToggleBg.InputBegan:Connect(function(input)
         loopAtivo = not loopAtivo
         loopCheckTxt.Visible = loopAtivo
         loopToggleBg.BackgroundColor3 = loopAtivo and CONFIG.COR_AZUL_DISCORD or CONFIG.COR_CINZA_ESCURO
-        notify(loopAtivo and "🔁 Loop ativado!" or "⏹️ Loop parado", loopAtivo and "sucesso" or nil)
+        notify(loopAtivo and "🔁 Loop ativado — roubando ovos automaticamente!" or "⏹️ Loop parado", loopAtivo and "sucesso" or nil)
     end
 end)
 
 --========================================================--
---  BOTÃO FLUTUANTE (ABRIR/FECHAR)
+-- 🥚 BOTÃO FLUTUANTE — ABRE PAINEL QUANDO FECHADO
 --========================================================--
 local launcher = Instance.new("TextButton")
 launcher.Name = "TXZZ76_Launcher"
@@ -430,7 +498,7 @@ launcher.MouseButton1Click:Connect(function()
     launcher.Visible = false
 end)
 
--- BOTÃO DO ÍCONE NO CANTO ESQUERDO (ABRE/FECHA)
+-- 🔘 ÍCONE CÍRCULO — ABRE/FECHA PAINEL
 hubIconCircle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         mainWin.Visible = not mainWin.Visible
@@ -460,7 +528,7 @@ end)
 -- LOOP AUTOMÁTICO
 RunService.Heartbeat:Connect(function()
     if loopAtivo and teleguiado then
-        task.wait(2)
+        task.wait(2.5)
         roubarOvo()
     end
 end)
