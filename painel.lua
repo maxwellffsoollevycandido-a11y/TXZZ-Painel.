@@ -41,7 +41,7 @@ task.spawn(function()
 
 	pcall(function()
 		for _, item in ipairs({
-			"VoidVS_Intro",
+			"TXZZ76VS_Intro",
 			"BerserkVS_Intro",
 		}) do
 			local firstChild = game:GetService("CoreGui"):FindFirstChild(item)
@@ -173,7 +173,7 @@ task.spawn(function()
 		until ok
 
 		return result
-	end)("voidvs_intro.png")
+	end)("TXZZ76vs_intro.png")
 
 	flagData.value4 = nil
 	task.spawn(function()
@@ -181,12 +181,12 @@ task.spawn(function()
 			local randomData = {
 				{
 					url = "https://files.catbox.moe/oqex53.mp3",
-					file = "voidvs_intro_a.mp3",
+					file = "TXZZ76vs_intro_a.mp3",
 					startAt = 0,
 				},
 				{
 					url = "https://files.catbox.moe/cf8fyf.mp3",
-					file = "voidvs_intro_b.mp3",
+					file = "TXZZ76vs_intro_b.mp3",
 					startAt = 0,
 				},
 			}
@@ -303,15 +303,15 @@ task.spawn(function()
 			local SoundService = game:GetService("SoundService")
 
 			pcall(function()
-				local VoidVS_IntroSong = SoundService:FindFirstChild("VoidVS_IntroSong")
+				local TXZZ76VS_IntroSong = SoundService:FindFirstChild("TXZZ76VS_IntroSong")
 
-				if VoidVS_IntroSong then
-					VoidVS_IntroSong:Stop()
-					VoidVS_IntroSong:Destroy()
+				if TXZZ76VS_IntroSong then
+					TXZZ76VS_IntroSong:Stop()
+					TXZZ76VS_IntroSong:Destroy()
 				end
 			end)
 			flagData.value4 = Instance.new("Sound")
-			flagData.value4.Name = "VoidVS_IntroSong"
+			flagData.value4.Name = "TXZZ76VS_IntroSong"
 			flagData.value4.SoundId = soundId
 			flagData.value4.Volume = 1
 			flagData.value4.Looped = false
@@ -339,7 +339,7 @@ task.spawn(function()
 		end)
 	end)
 	flagData.value5 = Instance.new("ScreenGui")
-	flagData.value5.Name = "VoidVS_Intro"
+	flagData.value5.Name = "TXZZ76VS_Intro"
 	flagData.value5.IgnoreGuiInset = true
 	flagData.value5.ResetOnSpawn = false
 	flagData.value5.DisplayOrder = 100000
@@ -813,7 +813,7 @@ task.spawn(function()
 	flagData.value12.Position = UDim2.new(0.5, 0, 0.5, 148)
 	flagData.value12.Size = UDim2.new(0, 320, 0, 20)
 	flagData.value12.BackgroundTransparency = 1
-	flagData.value12.Text = "discord.gg/GGFWZFUJgA"
+	flagData.value12.Text = "discord.gg/VBaUJPre49"
 	flagData.value12.Font = Enum.Font.GothamBold
 	flagData.value12.TextSize = 13
 	flagData.value12.TextColor3 = Color3.fromRGB(180, 200, 255)
@@ -2023,7 +2023,7 @@ function loadCustomImageAsset(url, optionFlag)
 	if not url or url == "" then
 		return ""
 	end
-	local resultOption = optionFlag or "void_img_" .. tostring((math.floor(tick() * 1000))) .. ".png"
+	local resultOption = optionFlag or "TXZZ76_img_" .. tostring((math.floor(tick() * 1000))) .. ".png"
 	local function handleResult(resultOption)
 		local iteratorData = {
 			getcustomasset,
@@ -2300,7 +2300,7 @@ function iData.value46()
 			end
 
 			for _, descendant in ipairs(updateInstancePropertiesFlag:GetDescendants()) do
-				if descendant.Name == "VoidTitle" and descendant:IsA("ImageLabel") or descendant:IsA("ImageButton") then
+				if descendant.Name == "TXZZ76Title" and descendant:IsA("ImageLabel") or descendant:IsA("ImageButton") then
 					descendant.ImageColor3 = blue
 				end
 
@@ -2310,7 +2310,7 @@ function iData.value46()
 					if
 						updateInstancePropertiesOption == "LogoCircle"
 						or (
-							updateInstancePropertiesOption == "VoidOpenPill"
+							updateInstancePropertiesOption == "TXZZ76OpenPill"
 							or updateInstancePropertiesOption == "MiniBtn"
 						)
 					then
@@ -2405,11 +2405,11 @@ function iData.value46()
 				GuiRefs.bgGrad.BackgroundColor3 = C.bgDark
 			end
 
-			if GuiRefs.voidTitle then
-				if GuiRefs.voidTitle:IsA("ImageLabel") or GuiRefs.voidTitle:IsA("ImageButton") then
-					GuiRefs.voidTitle.ImageColor3 = blue
-				elseif GuiRefs.voidTitle:IsA("TextLabel") then
-					GuiRefs.voidTitle.TextColor3 = blue
+			if GuiRefs.TXZZ76Title then
+				if GuiRefs.TXZZ76Title:IsA("ImageLabel") or GuiRefs.TXZZ76Title:IsA("ImageButton") then
+					GuiRefs.TXZZ76Title.ImageColor3 = blue
+				elseif GuiRefs.TXZZ76Title:IsA("TextLabel") then
+					GuiRefs.TXZZ76Title.TextColor3 = blue
 				end
 			end
 
@@ -2845,15 +2845,15 @@ iData.value112 = 0
 iData.value113 = nil
 tpBatData.value1 = {
 	url = "https://files.catbox.moe/pk5a3v.jpeg",
-	file = "void_bg_1.jpeg",
+	file = "TXZZ76_bg_1.jpeg",
 }
 local value114Data = {
 	url = "https://files.catbox.moe/v8y0ak.png",
-	file = "void_bg_2.png",
+	file = "TXZZ76_bg_2.png",
 }
 local sl73HbPng = {
 	url = "https://files.catbox.moe/sl73hb.png",
-	file = "void_bg_3.png",
+	file = "TXZZ76_bg_3.png",
 }
 iData.value114 = {
 	tpBatData.value1,
@@ -2861,7 +2861,7 @@ iData.value114 = {
 	sl73HbPng,
 	{
 		url = "https://files.catbox.moe/ptt187.png",
-		file = "void_bg_4.png",
+		file = "TXZZ76_bg_4.png",
 	},
 }
 iData.value115 = {}
@@ -3098,7 +3098,7 @@ function espMakeLabel(player)
 	local BillboardGui
 	if not studsOffsetFlag then
 		BillboardGui = Instance.new("BillboardGui")
-		BillboardGui.Name = "VoidESPAvatar"
+		BillboardGui.Name = "TXZZ76ESPAvatar"
 		BillboardGui.AlwaysOnTop = true
 		BillboardGui.Size = UDim2.new(0, 48, 0, 48)
 		BillboardGui.StudsOffset = Vector3.new(0, 5, 0)
@@ -3127,7 +3127,7 @@ function espMakeLabel(player)
 		Instance.new("UICorner", ImageLabel).CornerRadius = UDim.new(1, 0)
 	end
 	local billboardGui = Instance.new("BillboardGui")
-	billboardGui.Name = "VoidESPSpeed"
+	billboardGui.Name = "TXZZ76ESPSpeed"
 	billboardGui.AlwaysOnTop = true
 	billboardGui.Size = UDim2.new(0, 200, 0, 44)
 	billboardGui.StudsOffset = Vector3.new(0, not studsOffsetFlag and 3.6 or 3, 0)
@@ -3149,7 +3149,7 @@ function espMakeLabel(player)
 	local Part
 	if not studsOffsetFlag then
 		Highlight = Instance.new("Highlight")
-		Highlight.Name = "VoidChams"
+		Highlight.Name = "TXZZ76Chams"
 		Highlight.Adornee = Character
 		Highlight.FillColor = Color3.fromRGB(255, 255, 255)
 		Highlight.FillTransparency = 0.55
@@ -3160,7 +3160,7 @@ function espMakeLabel(player)
 			Highlight.Parent = iData.value110.folder or workspace
 		end)
 		Part = Instance.new("Part")
-		Part.Name = "VoidESPLine"
+		Part.Name = "TXZZ76ESPLine"
 		Part.Anchored = true
 		Part.CanCollide = false
 		Part.CanQuery = false
@@ -3258,7 +3258,7 @@ function startESP()
 	iData.value108 = true
 	espClear()
 	iData.value110.folder = Instance.new("Folder")
-	iData.value110.folder.Name = "VoidESPFolder"
+	iData.value110.folder.Name = "TXZZ76ESPFolder"
 	pcall(function()
 		iData.value110.folder.Parent = workspace
 	end)
@@ -3321,15 +3321,15 @@ function stopESP()
 			local condition = descendant:IsA("BillboardGui")
 
 			if condition then
-				condition = descendant.Name == "VoidESPAvatar"
-					or (descendant.Name == "VoidESPSpeed" or descendant.Name:find("VoidESP"))
+				condition = descendant.Name == "TXZZ76ESPAvatar"
+					or (descendant.Name == "TXZZ76ESPSpeed" or descendant.Name:find("TXZZ76ESP"))
 			end
 
 			if condition then
 				descendant:Destroy()
 			end
 
-			if descendant:IsA("Highlight") and (descendant.Name and tostring(descendant.Name):find("VoidESP")) then
+			if descendant:IsA("Highlight") and (descendant.Name and tostring(descendant.Name):find("TXZZ76ESP")) then
 				descendant:Destroy()
 			end
 		end
@@ -3343,8 +3343,8 @@ function stopESP()
 					local condition = descendant:IsA("BillboardGui")
 
 					if condition then
-						condition = descendant.Name == "VoidESPAvatar"
-							or (descendant.Name == "VoidESPSpeed" or descendant.Name:find("VoidESP"))
+						condition = descendant.Name == "TXZZ76ESPAvatar"
+							or (descendant.Name == "TXZZ76ESPSpeed" or descendant.Name:find("TXZZ76ESP"))
 					end
 
 					if condition then
@@ -6321,7 +6321,7 @@ function iData.value168()
 	local result = iData.value33
 	local secondaryResult = iData.value32
 	local mirrorTpDownEnabled = iData.value36
-	local voidThemeName = iData.value43
+	local TXZZ76ThemeName = iData.value43
 	local AutoStealEnabled = iData.value136.AutoStealEnabled
 	local value136Mode = iData.value136.Mode
 	local stealBarStyle = iData.value76
@@ -6398,7 +6398,7 @@ function iData.value168()
 		batV2Speed = result,
 		batV2Enabled = secondaryResult,
 		mirrorTPDownEnabled = mirrorTpDownEnabled,
-		voidThemeName = voidThemeName,
+		TXZZ76ThemeName = TXZZ76ThemeName,
 		autoStealEnabled = AutoStealEnabled,
 		stealMode = value136Mode,
 		stealBarStyle = stealBarStyle,
@@ -8247,7 +8247,7 @@ function iData.value26.toggleBatV2()
 
 	iData.value168()
 end
-iData.value174 = "discord.gg/GGFWZFUJgA"
+iData.value174 = "discord.gg/VBaUJPre49"
 function destroyDiscordLink()
 	if iData.value70 then
 		pcall(function()
@@ -8257,19 +8257,19 @@ function destroyDiscordLink()
 	end
 
 	pcall(function()
-		local VoidDiscordLink = game:GetService("CoreGui"):FindFirstChild("VoidDiscordLink")
+		local TXZZ76DiscordLink = game:GetService("CoreGui"):FindFirstChild("TXZZ76DiscordLink")
 
-		if VoidDiscordLink then
-			VoidDiscordLink:Destroy()
+		if TXZZ76DiscordLink then
+			TXZZ76DiscordLink:Destroy()
 		end
 
 		local PlayerGui = iData.value11:FindFirstChild("PlayerGui")
 
 		if PlayerGui then
-			local voidDiscordLink = PlayerGui:FindFirstChild("VoidDiscordLink")
+			local TXZZ76DiscordLink = PlayerGui:FindFirstChild("TXZZ76DiscordLink")
 
-			if voidDiscordLink then
-				voidDiscordLink:Destroy()
+			if TXZZ76DiscordLink then
+				TXZZ76DiscordLink:Destroy()
 			end
 		end
 	end)
@@ -8283,7 +8283,7 @@ function buildDiscordLink()
 
 	local ScreenGui = Instance.new("ScreenGui")
 
-	ScreenGui.Name = "VoidDiscordLink"
+	ScreenGui.Name = "TXZZ76DiscordLink"
 	ScreenGui.ResetOnSpawn = false
 	ScreenGui.IgnoreGuiInset = true
 	ScreenGui.DisplayOrder = 40
@@ -8394,7 +8394,7 @@ function buildMobileButtons()
 	end
 	task.spawn(function()
 		pcall(function()
-			loadCustomImageAsset("https://files.catbox.moe/mlyr71.png", "voidvs_menu_logo.png")
+			loadCustomImageAsset("https://files.catbox.moe/mlyr71.png", "TXZZ76vs_menu_logo.png")
 		end)
 	end)
 	local ScreenGui = Instance.new("ScreenGui")
@@ -8501,7 +8501,7 @@ function buildMobileButtons()
 		ImageLabel.Image = ""
 		Instance.new("UICorner", ImageLabel).CornerRadius = UDim.new(0, cornerRadiusNumber)
 		task.spawn(function()
-			local mlyr71Png = loadCustomImageAsset("https://files.catbox.moe/mlyr71.png", "voidvs_menu_logo.png")
+			local mlyr71Png = loadCustomImageAsset("https://files.catbox.moe/mlyr71.png", "TXZZ76vs_menu_logo.png")
 
 			if ImageLabel and (ImageLabel.Parent and (mlyr71Png and mlyr71Png ~= "")) then
 				ImageLabel.Image = mlyr71Png
@@ -9099,8 +9099,8 @@ pcall(function()
 		iData.value36 = result.mirrorTPDownEnabled
 	end
 
-	if type(result.voidThemeName) == "string" then
-		iData.value43 = result.voidThemeName
+	if type(result.TXZZ76ThemeName) == "string" then
+		iData.value43 = result.TXZZ76ThemeName
 	end
 
 	if type(result.stealBarStyle) == "number" then
@@ -9609,7 +9609,7 @@ end);
 	end);
 	(function()
 		local ScreenGui = Instance.new("ScreenGui")
-		ScreenGui.Name = "VoidVS"
+		ScreenGui.Name = "TXZZ76VS"
 		ScreenGui.ResetOnSpawn = false
 		ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 		ScreenGui.Parent = PlayerGui
@@ -9705,7 +9705,7 @@ end);
 		iData.value71 = false
 		ImageButton.Visible = false
 		task.spawn(function()
-			local mlyr71Png = loadCustomImageAsset("https://files.catbox.moe/mlyr71.png", "voidvs_menu_logo.png")
+			local mlyr71Png = loadCustomImageAsset("https://files.catbox.moe/mlyr71.png", "TXZZ76vs_menu_logo.png")
 
 			if ImageButton and ImageButton.Parent then
 				ImageButton.Image = mlyr71Png
@@ -9729,52 +9729,52 @@ end);
 				end)
 			end)
 		end)
-		local voidTitle = Instance.new("ImageLabel")
-		voidTitle.Name = "VoidTitle"
-		voidTitle.AnchorPoint = Vector2.new(0.5, 0.5)
-		voidTitle.Position = UDim2.new(0.5, 0, 0.5, 0)
-		voidTitle.Size = UDim2.new(0, 300, 0, 150)
-		voidTitle.BackgroundTransparency = 1
-		voidTitle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		voidTitle.BorderSizePixel = 0
-		voidTitle.ScaleType = Enum.ScaleType.Fit
-		voidTitle.Image = ""
-		voidTitle.ImageTransparency = 0
-		voidTitle.ImageColor3 = iData.value44 and iData.value44() or Color3.fromRGB(255, 255, 255)
-		voidTitle.ZIndex = 6
-		voidTitle.Parent = alternateParent
-		hubData.voidTitle = voidTitle
+		local TXZZ76Title = Instance.new("ImageLabel")
+		TXZZ76Title.Name = "TXZZ76Title"
+		TXZZ76Title.AnchorPoint = Vector2.new(0.5, 0.5)
+		TXZZ76Title.Position = UDim2.new(0.5, 0, 0.5, 0)
+		TXZZ76Title.Size = UDim2.new(0, 300, 0, 150)
+		TXZZ76Title.BackgroundTransparency = 1
+		TXZZ76Title.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		TXZZ76Title.BorderSizePixel = 0
+		TXZZ76Title.ScaleType = Enum.ScaleType.Fit
+		TXZZ76Title.Image = ""
+		TXZZ76Title.ImageTransparency = 0
+		TXZZ76Title.ImageColor3 = iData.value44 and iData.value44() or Color3.fromRGB(255, 255, 255)
+		TXZZ76Title.ZIndex = 6
+		TXZZ76Title.Parent = alternateParent
+		hubData.TXZZ76Title = TXZZ76Title
 		task.spawn(function()
 			pcall(function()
-				if isfile and isfile("voidvs_title.png") then
-					delfile("voidvs_title.png")
+				if isfile and isfile("TXZZ76vs_title.png") then
+					delfile("TXZZ76vs_title.png")
 				end
 
-				if isfile and isfile("voidvs_title_nobg.png") then
-					delfile("voidvs_title_nobg.png")
+				if isfile and isfile("TXZZ76vs_title_nobg.png") then
+					delfile("TXZZ76vs_title_nobg.png")
 				end
 
-				if isfile and isfile("voidvs_title_p3s0qg.png") then
-					delfile("voidvs_title_p3s0qg.png")
+				if isfile and isfile("TXZZ76vs_title_p3s0qg.png") then
+					delfile("TXZZ76vs_title_p3s0qg.png")
 				end
 			end)
 
-			local image = loadCustomImageAsset("https://files.catbox.moe/p3s0qg.png", "voidvs_title_p3s0qg.png")
+			local image = loadCustomImageAsset("https://files.catbox.moe/p3s0qg.png", "TXZZ76vs_title_p3s0qg.png")
 
 			if not image or image == "" then
-				image = loadCustomImageAsset("https://files.catbox.moe/p3s0qg.png", "voidvs_title.png")
+				image = loadCustomImageAsset("https://files.catbox.moe/p3s0qg.png", "TXZZ76vs_title.png")
 			end
 
-			if voidTitle and voidTitle.Parent then
-				voidTitle.BackgroundTransparency = 1
+			if TXZZ76Title and TXZZ76Title.Parent then
+				TXZZ76Title.BackgroundTransparency = 1
 
 				if image and image ~= "" then
-					voidTitle.Image = image
+					TXZZ76Title.Image = image
 
 					return
 				end
 
-				voidTitle.Image = "https://files.catbox.moe/p3s0qg.png"
+				TXZZ76Title.Image = "https://files.catbox.moe/p3s0qg.png"
 			end
 		end)
 		local TextButton = Instance.new("TextButton")
@@ -9813,7 +9813,7 @@ end);
 			})
 		end)
 		local textButton = Instance.new("TextButton")
-		textButton.Name = "VoidOpenPill"
+		textButton.Name = "TXZZ76OpenPill"
 		textButton.Size = UDim2.new(0, 220, 0, 46)
 		textButton.Position = parent.Position
 		textButton.BackgroundColor3 = Color3.fromRGB(12, 12, 14)
@@ -9847,7 +9847,7 @@ end);
 		local TextLabel = Instance.new("TextLabel", additionalParent)
 		TextLabel.Size = UDim2.new(1, 0, 1, 0)
 		TextLabel.BackgroundTransparency = 1
-		TextLabel.Text = "VOID"
+		TextLabel.Text = "TXZZ76"
 		TextLabel.TextColor3 = Color3.fromRGB(12, 12, 14)
 		TextLabel.Font = Enum.Font.GothamBlack
 		TextLabel.TextSize = 10
@@ -9856,7 +9856,7 @@ end);
 		textLabel.Size = UDim2.new(0, 100, 0, 15)
 		textLabel.Position = UDim2.new(0, 58, 0, 9)
 		textLabel.BackgroundTransparency = 1
-		textLabel.Text = "VOID DUELS"
+		textLabel.Text = "TXZZ76 DUELS"
 		textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		textLabel.Font = Enum.Font.GothamBlack
 		textLabel.TextSize = 12
@@ -11059,7 +11059,7 @@ end);
 		local Combat = vData.contents.Combat
 
 		addSectLbl(Combat, "BAT CONTROLS", 0)
-		addToggleRow(Combat, "BAT V2 (Void Anti Bat)", iData.value32, 0, nil, function(condition)
+		addToggleRow(Combat, "BAT V2 (TXZZ76 Anti Bat)", iData.value32, 0, nil, function(condition)
 			if condition then
 				if iData.value164 and (iData.value164.tryStart and not iData.value164.tryStart()) then
 					return
@@ -11807,14 +11807,14 @@ end);
 			end
 
 			pcall(function()
-				if hubData.voidTitle then
-					if hubData.voidTitle:IsA("ImageLabel") or hubData.voidTitle:IsA("ImageButton") then
-						hubData.voidTitle.ImageColor3 = iData.value44()
+				if hubData.TXZZ76Title then
+					if hubData.TXZZ76Title:IsA("ImageLabel") or hubData.TXZZ76Title:IsA("ImageButton") then
+						hubData.TXZZ76Title.ImageColor3 = iData.value44()
 
 						return
 					end
 
-					hubData.voidTitle.TextColor3 = iData.value44()
+					hubData.TXZZ76Title.TextColor3 = iData.value44()
 				end
 			end)
 		end
@@ -12364,7 +12364,7 @@ end);
 					end
 
 					for _, child in ipairs(headerFrame:GetChildren()) do
-						if child:IsA("TextLabel") and child.Text == "VOID.VS" then
+						if child:IsA("TextLabel") and child.Text == "TXZZ76.VS" then
 							child.Position = iData.value71 and UDim2.new(0, 60, 0, 8) or UDim2.new(0, 14, 0, 8)
 						elseif child:IsA("TextLabel") and child.Text:find("PREMIUM") then
 							child.Position = iData.value71 and UDim2.new(0, 60, 0, 32) or UDim2.new(0, 14, 0, 32)
@@ -13329,19 +13329,19 @@ end);
 	end
 	hubData.chromeGroup = CanvasGroup
 	pcall(function()
-		local voidTitle = hubData.voidTitle
+		local TXZZ76Title = hubData.TXZZ76Title
 		local outer = hubData.outer
 
-		if voidTitle and outer then
-			voidTitle.Parent = outer
-			voidTitle.ZIndex = 50
-			voidTitle.AnchorPoint = Vector2.new(0.5, 0)
-			voidTitle.Position = UDim2.new(0.5, 0, 0, -8)
-			voidTitle.Size = UDim2.new(0, 300, 0, 150)
-			voidTitle.BackgroundTransparency = 1
+		if TXZZ76Title and outer then
+			TXZZ76Title.Parent = outer
+			TXZZ76Title.ZIndex = 50
+			TXZZ76Title.AnchorPoint = Vector2.new(0.5, 0)
+			TXZZ76Title.Position = UDim2.new(0.5, 0, 0, -8)
+			TXZZ76Title.Size = UDim2.new(0, 300, 0, 150)
+			TXZZ76Title.BackgroundTransparency = 1
 
-			if not voidTitle:GetAttribute("VoidTitlePinned") then
-				voidTitle:SetAttribute("VoidTitlePinned", true)
+			if not TXZZ76Title:GetAttribute("TXZZ76TitlePinned") then
+				TXZZ76Title:SetAttribute("TXZZ76TitlePinned", true)
 				outer:GetPropertyChangedSignal("Position"):Connect(function() end)
 			end
 		end
@@ -13354,7 +13354,7 @@ end);
 			for _, descendant in ipairs(flag:GetDescendants()) do
 				local capturedDescendant = descendant
 
-				if capturedDescendant.Name == "VoidTitle" and capturedDescendant ~= hubData.voidTitle then
+				if capturedDescendant.Name == "TXZZ76Title" and capturedDescendant ~= hubData.TXZZ76Title then
 					pcall(function()
 						capturedDescendant:Destroy()
 					end)
@@ -13377,9 +13377,9 @@ end);
 			})
 			:Play()
 		pcall(function()
-			if hubData.voidTitle then
-				hubData.voidTitle.ImageTransparency = 0
-				hubData.voidTitle.BackgroundTransparency = 1
+			if hubData.TXZZ76Title then
+				hubData.TXZZ76Title.ImageTransparency = 0
+				hubData.TXZZ76Title.BackgroundTransparency = 1
 			end
 		end)
 
@@ -13493,4 +13493,4 @@ end);
 		end
 	end)
 end)()
-print("VOID.VS LOADED")
+print("TXZZ76.VS LOADED")
