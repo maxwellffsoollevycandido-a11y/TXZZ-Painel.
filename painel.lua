@@ -11322,7 +11322,7 @@ end);
 
 		iData.value26.setTPBatVisual = setTpBatVisual
 		addSectLbl(Combat, "ACTIONS", 9)
-		addActionRow(Combat, "Drop Egg", nil, function()
+		addActionRow(Combat, "Drop Brainrot", nil, function()
 			iData.value153()
 		end, 10)
 		addActionRow(Combat, "TP Down", nil, function()
@@ -11332,8 +11332,8 @@ end);
 	(function()
 		local Steal = vData.contents.Steal
 
-		addSectLbl(Steal, "AUTO STEAL", 0)
-		addToggleRow(Steal, "Auto Steal", iData.value136.AutoStealEnabled, 1, nil, function(autoStealEnabled)
+		addSectLbl(Steal, "AUTO STEAL EGG", 0)
+		addToggleRow(Steal, "Auto Steal Egg", iData.value136.AutoStealEnabled, 1, nil, function(autoStealEnabled)
 			iData.value136.AutoStealEnabled = autoStealEnabled
 
 			if autoStealEnabled then
@@ -11356,11 +11356,11 @@ end);
 
 			iData.value168()
 		end)
-		addInputRow(Steal, "Steal Radius", iData.value136.StealRadius, 2, function(numberText)
+		addInputRow(Steal, "Areas to Steal", iData.value136.StealRadius, 2, function(numberText)
 			iData.value136.StealRadius = tonumber(numberText) or 60
 			iData.value168()
 		end)
-		addSectLbl(Steal, "STEAL BAR STYLE", 2)
+		addSectLbl(Steal, "EGG RARITIES TO STEAL", 2)
 
 		local parent = Instance.new("Frame")
 
@@ -11395,11 +11395,11 @@ end);
 		for _, item in ipairs({
 			{
 				id = 1,
-				label = "1 \194\183 Vertical",
+				label = "1 \194\183 Secret / Selected",
 			},
 			{
 				id = 2,
-				label = "2 \194\183 Full",
+				label = "2 \194\183 All Rarities",
 			},
 		}) do
 			local capturedV = item
@@ -11426,7 +11426,7 @@ end);
 		end
 
 		updateInstanceProperties()
-		addSectLbl(Steal, "STEAL BAR SIZE", 3)
+		addSectLbl(Steal, "STEAL SPEED", 3)
 
 		local frame = Instance.new("Frame")
 
@@ -11504,7 +11504,11 @@ end);
 			pcall(createStealBar)
 			iData.value168()
 		end)
-		addSectLbl(Steal, "HOLD AT %", 4)
+		addSectLbl(Steal, "INSTANT STEAL", 4)
+		addToggleRow(Steal, "Auto Steal Selected Eggs", false, 5, nil, function() iData.value168() end)
+		addToggleRow(Steal, "Auto Steal Secret Egg", false, 6, nil, function() iData.value168() end)
+		addToggleRow(Steal, "Auto Steal Big Egg", false, 7, nil, function() iData.value168() end)
+		addToggleRow(Steal, "Auto Steal Rarest Egg", false, 8, nil, function() iData.value168() end)
 
 		local secondaryParent = Instance.new("Frame")
 
@@ -12906,7 +12910,7 @@ end);
 		createFrame(Keybinds, "TP Bat", iData.value131.TPBat, 6)
 		createFrame(Keybinds, "Auto Left", iData.value131.AutoLeft, 7)
 		createFrame(Keybinds, "Auto Right", iData.value131.AutoRight, 8)
-		createFrame(Keybinds, "Drop Egg", iData.value131.DropBrainrot, 9)
+		createFrame(Keybinds, "Drop Brainrot", iData.value131.DropBrainrot, 9)
 		createFrame(Keybinds, "TP Down", iData.value131.TPFloor, 10)
 	end)()
 	local function handler(flag, secondaryFlag)
@@ -13416,7 +13420,6 @@ end);
 				GroupTransparency = 0,
 			})
 			:Play()
-
 		if iData.value113 and iData.value113.Visible then
 			pcall(function()
 				iData.value2
@@ -13426,7 +13429,6 @@ end);
 					:Play()
 			end)
 		end
-
 		if hubData.inner then
 			pcall(function()
 				iData.value2
@@ -13485,10 +13487,8 @@ end);
 						CanvasGroup.GroupTransparency = 0
 					end)
 				end
-
 				timestamp = tick()
 			end
-
 			task.wait(0.12)
 		end
 	end)
