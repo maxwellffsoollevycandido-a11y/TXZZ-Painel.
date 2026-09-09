@@ -11322,7 +11322,7 @@ end);
 
 		iData.value26.setTPBatVisual = setTpBatVisual
 		addSectLbl(Combat, "ACTIONS", 9)
-		addActionRow(Combat, "Drop Brainrot", nil, function()
+		addActionRow(Combat, "Drop Egg", nil, function()
 			iData.value153()
 		end, 10)
 		addActionRow(Combat, "TP Down", nil, function()
@@ -12906,7 +12906,7 @@ end);
 		createFrame(Keybinds, "TP Bat", iData.value131.TPBat, 6)
 		createFrame(Keybinds, "Auto Left", iData.value131.AutoLeft, 7)
 		createFrame(Keybinds, "Auto Right", iData.value131.AutoRight, 8)
-		createFrame(Keybinds, "Drop Brainrot", iData.value131.DropBrainrot, 9)
+		createFrame(Keybinds, "Drop Egg", iData.value131.DropBrainrot, 9)
 		createFrame(Keybinds, "TP Down", iData.value131.TPFloor, 10)
 	end)()
 	local function handler(flag, secondaryFlag)
