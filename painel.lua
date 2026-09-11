@@ -10884,7 +10884,7 @@ end);
 			TextButton.Position = UDim2.new(sizeData.x, 2, sizeData.y, 1)
 			TextButton.BackgroundColor3 = textData.blueDark
 			TextButton.BackgroundTransparency = active ~= "Speed" and 0.42 or 0.12
-			TextButton.Text = active
+			TextButton.Text = (active == "Combat" and "Blox Fruits" or active)
 			TextButton.TextColor3 = active == "Speed" and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(230, 230, 235)
 			TextButton.TextSize = 10
 			TextButton.Font = Enum.Font.GothamBold
@@ -11058,279 +11058,79 @@ end);
 	(function()
 		local Combat = vData.contents.Combat
 
-		addSectLbl(Combat, "BAT CONTROLS", 0)
-		addToggleRow(Combat, "BAT V2 (TXZZ76 Anti Bat)", iData.value32, 0, nil, function(condition)
-			if condition then
-				if iData.value164 and (iData.value164.tryStart and not iData.value164.tryStart()) then
-					return
-				end
+		--========================================================
+		-- BLOX FRUITS • MENU
+		-- Substitui somente as opções antigas de Combat/PvP.
+		-- O layout principal do painel permanece inalterado.
+		--========================================================
 
-				iData.value26.startBatV2()
-			else
-				iData.value26.stopBatV2()
-			end
+		addSectLbl(Combat, "BLOX FRUITS • FARM", 0)
 
-			if iData.value78.batV2 then
-				iData.value78.batV2(iData.value32 or iData.value26.batV2)
-			end
+		local bfState = {
+			AutoFarmLevel = false,
+			AutoQuest = false,
+			FarmNearest = false,
+			AutoBoss = false,
+			Mastery = false,
+			FruitNotifier = false,
+			FruitFinder = false,
+			ChestFarm = false,
+			MaterialFarm = false,
+			AutoStats = false,
+			AutoRaid = false,
+			FactoryRaid = false,
+			SeaEvents = false,
+			Mirage = false,
+			RaceV4 = false,
+			ServerHop = false,
+		}
 
-			iData.value168()
-		end)
-		addInputRow(Combat, "BAT V2 Speed", iData.value33, 1, function(numberText)
-			iData.value33 = math.clamp(tonumber(numberText) or 56.5, 1, 200)
-			iData.value168()
-		end)
-		addToggleRow(Combat, "Mirror TP Down (Aimbot + BAT V2)", iData.value36, 2, nil, function(argument)
-			iData.value36 = argument == true
-
-			if not iData.value36 then
-				pcall(function()
-					table.clear(iData.value39)
-				end)
-			end
-
-			iData.value168()
-		end)
-
-		local _, addToggleRowResult = addToggleRow(Combat, "Bat Aimbot", iData.value31, 1, nil, function(condition)
-			if condition then
-				if iData.value27 then
-					iData.value27 = false
-					secondaryUpdateInstanceProperties()
-
-					if iData.value29 then
-						iData.value29(false)
-					end
-
-					if iData.value78.autoLeft then
-						iData.value78.autoLeft(false)
-					end
-				end
-
-				if iData.value28 then
-					iData.value28 = false
-					iData.value150()
-
-					if iData.value30 then
-						iData.value30(false)
-					end
-
-					if iData.value78.autoRight then
-						iData.value78.autoRight(false)
-					end
-				end
-
-				iData.value125()
-
-				if iData.value78.autoBat then
-					iData.value78.autoBat(true)
-				end
-			else
-				iData.value124()
-
-				if iData.value78.autoBat then
-					iData.value78.autoBat(false)
-				end
-			end
-
-			iData.value168()
-		end)
-
-		iData.value54 = addToggleRowResult
-
-		local _, _ = addToggleRow(Combat, "Auto Swing", iData.value49, 2, nil, function(argument)
-			iData.value49 = argument
-			iData.value168()
-		end)
-
-		addToggleRow(Combat, "Aimbot After Hit", iData.value47, 3, nil, function(argument)
-			iData.value47 = argument
-			iData.value168()
-		end)
-
-		local _, _ = addToggleRow(Combat, "Bat Counter", iData.value21, 4, nil, function(value21Condition)
-			iData.value21 = value21Condition
-
-			if value21Condition then
-				iData.value56()
-			elseif iData.value140.batCounter then
-				iData.value140.batCounter:Disconnect()
-				iData.value140.batCounter = nil
-			end
-
-			iData.value168()
-		end)
-
-		addSectLbl(Combat, "RAGDOLL", 4)
-
-		local _, callback = addToggleRow(Combat, "Anti Ragdoll", iData.value18, 5, nil, function(value18Condition)
-			iData.value18 = value18Condition
-
-			if value18Condition then
-				if not iData.value140.antiRag then
-					iData.value140.antiRag = iData.value4.Heartbeat:Connect(function()
-						if not iData.value18 then
-							return
-						end
-
-						local Character = iData.value11.Character
-
-						if not Character then
-							return
-						end
-
-						local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-						local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
-
-						if not Humanoid or not HumanoidRootPart then
-							return
-						end
-
-						local State = Humanoid:GetState()
-						local flag = State == Enum.HumanoidStateType.Physics
-							or (State == Enum.HumanoidStateType.Ragdoll or State == Enum.HumanoidStateType.FallingDown)
-						local RagdollEndTime = iData.value11:GetAttribute("RagdollEndTime")
-
-						if RagdollEndTime and RagdollEndTime - workspace:GetServerTimeNow() > 0 then
-							flag = true
-						end
-
-						if flag then
-							pcall(function()
-								local result = iData.value11
-								local data = { workspace:GetServerTimeNow() }
-
-								result:SetAttribute("RagdollEndTime", unpackValues(data))
-							end)
-							for _, descendant in ipairs(Character:GetDescendants()) do
-								if
-									descendant:IsA("BallSocketConstraint")
-									or descendant:IsA("Attachment") and descendant.Name:find("RagdollAttachment")
-								then
-									descendant:Destroy()
-								end
-							end
-							for index, item in ipairs(Character:GetDescendants()) do
-								if item:IsA("Motor6D") and item.Enabled == false then
-									item.Enabled = true
-								end
-							end
-							if Humanoid.Health > 0 then
-								Humanoid:ChangeState(Enum.HumanoidStateType.Running)
-							end
-							workspace.CurrentCamera.CameraSubject = Humanoid
-							HumanoidRootPart.Anchored = false
-							HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
-							HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
-						end
-					end)
-				end
-			else
-				iData.value122()
-			end
-
-			iData.value168()
-		end)
-
-		if iData.value18 then
-			callback(true)
+		local function bfToggle(name, value, order)
+			addToggleRow(Combat, name, value, order, nil, function(enabled)
+				bfState[name:gsub("%W", "")] = enabled
+				iData.value168()
+			end)
 		end
 
-		local _, _ = addToggleRow(Combat, "Medusa Counter", iData.value20, 6, nil, function(value20Condition)
-			iData.value20 = value20Condition
+		-- Farming
+		bfToggle("Auto Farm Level", bfState.AutoFarmLevel, 1)
+		bfToggle("Auto Quest", bfState.AutoQuest, 2)
+		bfToggle("Farm Nearest", bfState.FarmNearest, 3)
+		bfToggle("Auto Boss", bfState.AutoBoss, 4)
+		bfToggle("Auto Mastery", bfState.Mastery, 5)
 
-			if value20Condition then
-				iData.value121(iData.value11.Character)
-			else
-				updateAnchor()
-			end
+		addSectLbl(Combat, "FRUITS • ITEMS", 6)
+		bfToggle("Fruit Notifier", bfState.FruitNotifier, 7)
+		bfToggle("Fruit Finder", bfState.FruitFinder, 8)
+		bfToggle("Auto Chest", bfState.ChestFarm, 9)
+		bfToggle("Material Farm", bfState.MaterialFarm, 10)
+		bfToggle("Auto Stats", bfState.AutoStats, 11)
 
-			iData.value168()
-		end)
-		local _, _ = addToggleRow(Combat, "Unwalk", iData.value22, 7, nil, function(value22Condition)
-			iData.value22 = value22Condition
+		addSectLbl(Combat, "RAIDS • SEA", 12)
+		bfToggle("Auto Raid", bfState.AutoRaid, 13)
+		bfToggle("Factory Raid", bfState.FactoryRaid, 14)
+		bfToggle("Sea Events", bfState.SeaEvents, 15)
+		bfToggle("Mirage", bfState.Mirage, 16)
+		bfToggle("Race V4", bfState.RaceV4, 17)
 
-			if value22Condition then
-				iData.value120()
-			else
-				iData.value172()
-			end
+		addSectLbl(Combat, "SERVER", 18)
+		bfToggle("Server Hop", bfState.ServerHop, 19)
 
-			iData.value168()
-		end)
-
-		addSectLbl(Combat, "PROTECTION", 13)
-
-		local _, setAntiKickVisual = addToggleRow(
-			Combat,
-			"Anti Kick / Safe Mode",
-			iData.value26.antiKick,
-			14,
-			nil,
-			function(condition)
-				if condition then
-					iData.value26.antiKick = false
-					iData.value26.enableAntiKick()
-
-					if iData.value164 and iData.value164.forceStop then
-						iData.value164.forceStop("SAFE MODE")
-					end
-				else
-					iData.value26.disableAntiKick()
+		addActionRow(Combat, "Blox Fruits Info", nil, function()
+			pcall(function()
+				if StarterGui then
+					StarterGui:SetCore("SendNotification", {
+						Title = "TXZZ76 • Blox Fruits",
+						Text = "Menu Blox Fruits carregado.",
+						Duration = 3
+					})
 				end
-
-				if iData.value26.setSafeModeVisual then
-					iData.value26.setSafeModeVisual(iData.value26.antiKick)
-				end
-
-				iData.value168()
-			end
-		)
-
-		iData.value26.setAntiKickVisual = setAntiKickVisual
-		addSectLbl(Combat, "TP BAT", 15)
-
-		local _, setTpBatVisual = addToggleRow(Combat, "TP Bat", iData.value26.tpBat, 16, nil, function(secondaryTpBat)
-			if secondaryTpBat then
-				if iData.value164 and (iData.value164.tryStart and not iData.value164.tryStart()) then
-					if iData.value26.setTPBatVisual then
-						iData.value26.setTPBatVisual(false)
-					end
-
-					if iData.value78.tpBat then
-						iData.value78.tpBat(false)
-					end
-
-					return
-				end
-
-				iData.value26.startTPBat()
-			else
-				iData.value26.stopTPBat()
-			end
-
-			if iData.value78.tpBat then
-				local tpBat = iData.value78.tpBat
-
-				if secondaryTpBat then
-					secondaryTpBat = iData.value26.tpBat
-				end
-
-				tpBat(secondaryTpBat)
-			end
-		end)
-
-		iData.value26.setTPBatVisual = setTpBatVisual
-		addSectLbl(Combat, "ACTIONS", 9)
-		addActionRow(Combat, "Drop Brainrot", nil, function()
-			iData.value153()
-		end, 10)
-		addActionRow(Combat, "TP Down", nil, function()
-			iData.value155()
-		end, 12)
+			end)
+		end, 20)
 	end)();
 	(function()
 		local Steal = vData.contents.Steal
+
 
 		addSectLbl(Steal, "AUTO STEAL EGG", 0)
 		addToggleRow(Steal, "Auto Steal Egg", iData.value136.AutoStealEnabled, 1, nil, function(autoStealEnabled)
