@@ -1,305 +1,188 @@
---========================================================--
--- TXZZ76 HUB | KEY SYSTEM
--- VERSÃO CORRIGIDA
---========================================================--
+--// TXZZ76 HUB + KEY SYSTEM
+--// KEY: TXZZ
+--// DISCORD: discord.gg/cYKwrDjfKk
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
-local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
-
-if not LocalPlayer then
-    return
-end
-
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
---========================================================--
+--==================================================
 -- CONFIG
---========================================================--
+--==================================================
 
 local KEY_CORRETA = "TXZZ"
 local DISCORD_LINK = "https://discord.gg/cYKwrDjfKk"
 
---========================================================--
--- LIMPAR
---========================================================--
-
-pcall(function()
-    local oldKey = PlayerGui:FindFirstChild("TXZZ76_KEY_SYSTEM")
-    if oldKey then
-        oldKey:Destroy()
-    end
-
-    local oldHub = PlayerGui:FindFirstChild("TXZZ76HUBCore")
-    if oldHub then
-        oldHub:Destroy()
-    end
-end)
-
---========================================================--
--- KEY GUI
---========================================================--
+--==================================================
+-- KEY SYSTEM
+--==================================================
 
 local KeyGui = Instance.new("ScreenGui")
-KeyGui.Name = "TXZZ76_KEY_SYSTEM"
+KeyGui.Name = "TXZZ_KeySystem"
 KeyGui.ResetOnSpawn = false
-KeyGui.IgnoreGuiInset = true
-KeyGui.DisplayOrder = 999999
+KeyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 KeyGui.Parent = PlayerGui
 
-local KeyFrame = Instance.new("Frame")
-KeyFrame.Name = "KeyFrame"
-KeyFrame.Size = UDim2.new(0, 370, 0, 300)
-KeyFrame.Position = UDim2.new(0.5, -185, 0.5, -150)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-KeyFrame.BorderSizePixel = 0
-KeyFrame.Parent = KeyGui
+local KeyMain = Instance.new("Frame")
+KeyMain.Size = UDim2.new(0, 370, 0, 300)
+KeyMain.Position = UDim2.new(0.5, -185, 0.5, -150)
+KeyMain.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+KeyMain.BorderSizePixel = 0
+KeyMain.Parent = KeyGui
 
 local KeyCorner = Instance.new("UICorner")
 KeyCorner.CornerRadius = UDim.new(0, 12)
-KeyCorner.Parent = KeyFrame
+KeyCorner.Parent = KeyMain
 
 local KeyStroke = Instance.new("UIStroke")
 KeyStroke.Color = Color3.fromRGB(255, 200, 0)
-KeyStroke.Thickness = 2
-KeyStroke.Parent = KeyFrame
+KeyStroke.Thickness = 1.5
+KeyStroke.Parent = KeyMain
 
--- título
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, -20, 0, 45)
+KeyTitle.Position = UDim2.new(0, 10, 0, 10)
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Text = "TXZZ 76 • KEY SYSTEM"
+KeyTitle.TextColor3 = Color3.fromRGB(255, 210, 0)
+KeyTitle.TextSize = 18
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.Parent = KeyMain
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 0, 40)
-Title.Position = UDim2.new(0, 10, 0, 15)
-Title.BackgroundTransparency = 1
-Title.Text = "TXZZ76 HUB"
-Title.TextColor3 = Color3.fromRGB(255, 210, 0)
-Title.TextSize = 21
-Title.Font = Enum.Font.GothamBold
-Title.Parent = KeyFrame
-
-local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(1, -20, 0, 25)
-Subtitle.Position = UDim2.new(0, 10, 0, 53)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "KEY SYSTEM"
-Subtitle.TextColor3 = Color3.fromRGB(170, 170, 170)
-Subtitle.TextSize = 11
-Subtitle.Font = Enum.Font.GothamSemibold
-Subtitle.Parent = KeyFrame
-
--- instrução
-
-local Info = Instance.new("TextLabel")
-Info.Size = UDim2.new(1, -30, 0, 30)
-Info.Position = UDim2.new(0, 15, 0, 80)
-Info.BackgroundTransparency = 1
-Info.Text = "Digite sua Key para liberar o painel"
-Info.TextColor3 = Color3.fromRGB(220, 220, 220)
-Info.TextSize = 12
-Info.Font = Enum.Font.Gotham
-Info.Parent = KeyFrame
-
--- caixa
+local KeyInfo = Instance.new("TextLabel")
+KeyInfo.Size = UDim2.new(1, -40, 0, 40)
+KeyInfo.Position = UDim2.new(0, 20, 0, 60)
+KeyInfo.BackgroundTransparency = 1
+KeyInfo.Text = "🔐 Digite sua Key para continuar"
+KeyInfo.TextColor3 = Color3.fromRGB(220, 220, 220)
+KeyInfo.TextSize = 12
+KeyInfo.Font = Enum.Font.Gotham
+KeyInfo.Parent = KeyMain
 
 local KeyBox = Instance.new("TextBox")
-KeyBox.Name = "KeyBox"
-KeyBox.Size = UDim2.new(1, -30, 0, 42)
-KeyBox.Position = UDim2.new(0, 15, 0, 115)
+KeyBox.Size = UDim2.new(1, -40, 0, 42)
+KeyBox.Position = UDim2.new(0, 20, 0, 110)
 KeyBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 KeyBox.BorderSizePixel = 0
-KeyBox.ClearTextOnFocus = false
-KeyBox.PlaceholderText = "Digite sua Key..."
-KeyBox.PlaceholderColor3 = Color3.fromRGB(110, 110, 110)
+KeyBox.PlaceholderText = "Digite a Key..."
+KeyBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
 KeyBox.Text = ""
 KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-KeyBox.TextSize = 12
+KeyBox.TextSize = 13
 KeyBox.Font = Enum.Font.Gotham
-KeyBox.Parent = KeyFrame
+KeyBox.ClearTextOnFocus = false
+KeyBox.Parent = KeyMain
 
-local BoxCorner = Instance.new("UICorner")
-BoxCorner.CornerRadius = UDim.new(0, 7)
-BoxCorner.Parent = KeyBox
-
-local BoxStroke = Instance.new("UIStroke")
-BoxStroke.Color = Color3.fromRGB(55, 55, 55)
-BoxStroke.Thickness = 1
-BoxStroke.Parent = KeyBox
-
--- botão verificar
+local KeyBoxCorner = Instance.new("UICorner")
+KeyBoxCorner.CornerRadius = UDim.new(0, 7)
+KeyBoxCorner.Parent = KeyBox
 
 local Verify = Instance.new("TextButton")
-Verify.Name = "VerifyButton"
-Verify.Size = UDim2.new(1, -30, 0, 40)
-Verify.Position = UDim2.new(0, 15, 0, 168)
+Verify.Size = UDim2.new(1, -40, 0, 42)
+Verify.Position = UDim2.new(0, 20, 0, 165)
 Verify.BackgroundColor3 = Color3.fromRGB(45, 35, 5)
 Verify.BorderSizePixel = 0
 Verify.Text = "VERIFICAR KEY"
 Verify.TextColor3 = Color3.fromRGB(255, 210, 0)
 Verify.TextSize = 12
 Verify.Font = Enum.Font.GothamBold
-Verify.Parent = KeyFrame
+Verify.Parent = KeyMain
 
 local VerifyCorner = Instance.new("UICorner")
 VerifyCorner.CornerRadius = UDim.new(0, 7)
 VerifyCorner.Parent = Verify
 
-local VerifyStroke = Instance.new("UIStroke")
-VerifyStroke.Color = Color3.fromRGB(190, 150, 0)
-VerifyStroke.Thickness = 1
-VerifyStroke.Parent = Verify
-
--- discord
-
 local DiscordButton = Instance.new("TextButton")
-DiscordButton.Name = "DiscordButton"
-DiscordButton.Size = UDim2.new(1, -30, 0, 38)
-DiscordButton.Position = UDim2.new(0, 15, 0, 218)
-DiscordButton.BackgroundColor3 = Color3.fromRGB(45, 45, 80)
+DiscordButton.Size = UDim2.new(1, -40, 0, 35)
+DiscordButton.Position = UDim2.new(0, 20, 0, 220)
+DiscordButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 DiscordButton.BorderSizePixel = 0
-DiscordButton.Text = "COPIAR DISCORD"
-DiscordButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-DiscordButton.TextSize = 11
+DiscordButton.Text = "DISCORD • discord.gg/cYKwrDjfKk"
+DiscordButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+DiscordButton.TextSize = 10
 DiscordButton.Font = Enum.Font.GothamBold
-DiscordButton.Parent = KeyFrame
+DiscordButton.Parent = KeyMain
 
 local DiscordCorner = Instance.new("UICorner")
 DiscordCorner.CornerRadius = UDim.new(0, 7)
 DiscordCorner.Parent = DiscordButton
 
--- link
-
-local LinkLabel = Instance.new("TextLabel")
-LinkLabel.Size = UDim2.new(1, -30, 0, 22)
-LinkLabel.Position = UDim2.new(0, 15, 0, 263)
-LinkLabel.BackgroundTransparency = 1
-LinkLabel.Text = DISCORD_LINK
-LinkLabel.TextColor3 = Color3.fromRGB(100, 160, 255)
-LinkLabel.TextSize = 10
-LinkLabel.Font = Enum.Font.Gotham
-LinkLabel.Parent = KeyFrame
-
---========================================================--
--- NOTIFICAÇÃO KEY
---========================================================--
-
-local function NotifyKey(text)
-
-    local Notification = Instance.new("TextLabel")
-
-    Notification.Size = UDim2.new(0, 300, 0, 38)
-    Notification.Position = UDim2.new(0.5, -150, 0, 20)
-    Notification.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    Notification.BorderSizePixel = 0
-    Notification.Text = text
-    Notification.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Notification.TextSize = 11
-    Notification.Font = Enum.Font.GothamBold
-    Notification.ZIndex = 100
-    Notification.Parent = KeyGui
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 7)
-    c.Parent = Notification
-
-    local s = Instance.new("UIStroke")
-    s.Color = Color3.fromRGB(255, 200, 0)
-    s.Thickness = 1
-    s.Parent = Notification
-
-    task.delay(2, function()
-        if Notification and Notification.Parent then
-            Notification:Destroy()
-        end
-    end)
-end
-
---========================================================--
--- COPIAR DISCORD
---========================================================--
-
 DiscordButton.MouseButton1Click:Connect(function()
-
-    local copied = false
-
     pcall(function()
         if setclipboard then
             setclipboard(DISCORD_LINK)
-            copied = true
         end
     end)
-
-    if copied then
-        DiscordButton.Text = "DISCORD COPIADO!"
-        NotifyKey("Discord copiado!")
-    else
-        DiscordButton.Text = "LINK: cYKwrDjfKk"
-        NotifyKey("Link: " .. DISCORD_LINK)
-    end
-
-    task.delay(1.5, function()
-        if DiscordButton and DiscordButton.Parent then
-            DiscordButton.Text = "COPIAR DISCORD"
-        end
-    end)
-
 end)
 
---========================================================--
+--==================================================
 -- HUB PRINCIPAL
---========================================================--
+--==================================================
 
 local function StartHub()
 
-    -- cria nova interface
+    local CoreGui = game:GetService("CoreGui")
+    local RunService = game:GetService("RunService")
+    local Lighting = game:GetService("Lighting")
+    local Workspace = game:GetService("Workspace")
+
+    pcall(function()
+        local old = PlayerGui:FindFirstChild("TXZZ76HUBCore")
+        if old then
+            old:Destroy()
+        end
+
+        local oldCore = CoreGui:FindFirstChild("TXZZ76HUBCore")
+        if oldCore then
+            oldCore:Destroy()
+        end
+    end)
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "TXZZ76HUBCore"
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.IgnoreGuiInset = true
-    ScreenGui.DisplayOrder = 999998
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = PlayerGui
 
-    --====================================================--
+    --==================================================
     -- NOTIFICAÇÃO
-    --====================================================--
+    --==================================================
 
-    local function HubNotify(text)
+    local function Notify(text)
 
-        local Frame = Instance.new("Frame")
-
-        Frame.Size = UDim2.new(0, 220, 0, 32)
-        Frame.Position = UDim2.new(1, 10, 1, -45)
-        Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-        Frame.BackgroundTransparency = 0.1
-        Frame.BorderSizePixel = 0
-        Frame.Parent = ScreenGui
+        local Notification = Instance.new("Frame")
+        Notification.Size = UDim2.new(0, 220, 0, 32)
+        Notification.Position = UDim2.new(1, 10, 1, -45)
+        Notification.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        Notification.BackgroundTransparency = 0.1
+        Notification.BorderSizePixel = 0
+        Notification.Parent = ScreenGui
 
         local Corner = Instance.new("UICorner")
         Corner.CornerRadius = UDim.new(0, 6)
-        Corner.Parent = Frame
+        Corner.Parent = Notification
 
         local Stroke = Instance.new("UIStroke")
         Stroke.Color = Color3.fromRGB(255, 200, 0)
         Stroke.Thickness = 1
-        Stroke.Parent = Frame
+        Stroke.Parent = Notification
 
-        local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(1, -12, 1, 0)
-        Label.Position = UDim2.new(0, 6, 0, 0)
-        Label.BackgroundTransparency = 1
-        Label.Text = text
-        Label.TextColor3 = Color3.fromRGB(240, 240, 240)
-        Label.TextSize = 9
-        Label.Font = Enum.Font.GothamBold
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Parent = Frame
+        local Text = Instance.new("TextLabel")
+        Text.Size = UDim2.new(1, -12, 1, 0)
+        Text.Position = UDim2.new(0, 6, 0, 0)
+        Text.BackgroundTransparency = 1
+        Text.Text = text
+        Text.TextColor3 = Color3.fromRGB(240, 240, 240)
+        Text.TextSize = 9
+        Text.Font = Enum.Font.GothamBold
+        Text.TextXAlignment = Enum.TextXAlignment.Left
+        Text.Parent = Notification
 
         TweenService:Create(
-            Frame,
+            Notification,
             TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
             {
                 Position = UDim2.new(1, -230, 1, -45)
@@ -308,33 +191,32 @@ local function StartHub()
 
         task.delay(2.5, function()
 
-            if not Frame.Parent then
+            if not Notification.Parent then
                 return
             end
 
-            local Tween = TweenService:Create(
-                Frame,
+            local tween = TweenService:Create(
+                Notification,
                 TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
                 {
                     Position = UDim2.new(1, 10, 1, -45)
                 }
             )
 
-            Tween:Play()
+            tween:Play()
 
-            Tween.Completed:Connect(function()
-                if Frame then
-                    Frame:Destroy()
+            tween.Completed:Connect(function()
+                if Notification then
+                    Notification:Destroy()
                 end
             end)
 
         end)
-
     end
 
-    --====================================================--
+    --==================================================
     -- ANTI LAG
-    --====================================================--
+    --==================================================
 
     pcall(function()
 
@@ -346,44 +228,53 @@ local function StartHub()
 
         for _, object in ipairs(Lighting:GetChildren()) do
 
-            if object:IsA("PostEffect")
+            local IsEffect =
+                object:IsA("PostEffect")
                 or object:IsA("BlurEffect")
                 or object:IsA("SunRaysEffect")
                 or object:IsA("ColorCorrectionEffect")
-                or object:IsA("BloomEffect") then
+                or object:IsA("BloomEffect")
 
-                object.Enabled = false
-
+            if IsEffect then
+                pcall(function()
+                    object.Enabled = false
+                end)
             end
 
         end
 
         local function OptimizeObject(object)
 
-            pcall(function()
+            if object:IsA("BasePart") then
 
-                if object:IsA("BasePart") then
-
+                pcall(function()
                     object.Material = Enum.Material.SmoothPlastic
                     object.Reflectance = 0
+                end)
 
-                elseif object:IsA("Decal")
-                    or object:IsA("Texture") then
+                return
+            end
 
+            if object:IsA("Decal") or object:IsA("Texture") then
+
+                pcall(function()
                     object.Transparency = 1
+                end)
 
-                elseif object:IsA("ParticleEmitter")
-                    or object:IsA("Trail")
-                    or object:IsA("Smoke")
-                    or object:IsA("Fire")
-                    or object:IsA("Sparkles") then
+                return
+            end
 
+            if object:IsA("ParticleEmitter")
+                or object:IsA("Trail")
+                or object:IsA("Smoke")
+                or object:IsA("Fire")
+                or object:IsA("Sparkles") then
+
+                pcall(function()
                     object.Enabled = false
+                end)
 
-                end
-
-            end)
-
+            end
         end
 
         for _, object in ipairs(Workspace:GetDescendants()) do
@@ -392,143 +283,128 @@ local function StartHub()
 
         Workspace.DescendantAdded:Connect(function(object)
 
-            task.wait()
+            task.defer(function()
 
-            OptimizeObject(object)
+                if object and object.Parent then
+                    OptimizeObject(object)
+                end
+
+            end)
 
         end)
 
     end)
 
-    HubNotify("Anti-Lag Activated")
+    Notify("✓ Anti-Lag Activated")
 
-    --====================================================--
-    -- JANELA
-    --====================================================--
+    --==================================================
+    -- MAIN FRAME
+    --==================================================
 
-    local Frame = Instance.new("Frame")
+    local GlowFrame = Instance.new("Frame")
+    GlowFrame.Name = "GlowFrame"
+    GlowFrame.Size = UDim2.new(0, 328, 0, 248)
+    GlowFrame.Position = UDim2.new(0.5, -164, 0.5, -124)
+    GlowFrame.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+    GlowFrame.BackgroundTransparency = 0.65
+    GlowFrame.BorderSizePixel = 0
+    GlowFrame.Parent = ScreenGui
 
-    Frame.Name = "GlowFrame"
-    Frame.Size = UDim2.new(0, 328, 0, 248)
-    Frame.Position = UDim2.new(0.5, -164, 0.5, -124)
-    Frame.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-    Frame.BackgroundTransparency = 0.65
-    Frame.BorderSizePixel = 0
-    Frame.Parent = ScreenGui
+    local GlowCorner = Instance.new("UICorner")
+    GlowCorner.CornerRadius = UDim.new(0, 12)
+    GlowCorner.Parent = GlowFrame
 
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 12)
-    Corner.Parent = Frame
-
-    local Main = Instance.new("Frame")
-
-    Main.Name = "MainFrame"
-    Main.Size = UDim2.new(0, 320, 0, 240)
-    Main.Position = UDim2.new(0, 4, 0, 4)
-    Main.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-    Main.BackgroundTransparency = 0.15
-    Main.BorderSizePixel = 0
-    Main.ClipsDescendants = true
-    Main.Parent = Frame
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 320, 0, 240)
+    MainFrame.Position = UDim2.new(0, 4, 0, 4)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    MainFrame.BackgroundTransparency = 0.15
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+    MainFrame.Parent = GlowFrame
 
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 10)
-    MainCorner.Parent = Main
+    MainCorner.Parent = MainFrame
 
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Color = Color3.fromRGB(255, 200, 0)
     MainStroke.Thickness = 1.5
-    MainStroke.Parent = Main
+    MainStroke.Parent = MainFrame
 
     local Gradient = Instance.new("UIGradient")
-
     Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(
-            0,
-            Color3.fromRGB(12, 12, 12)
-        ),
-        ColorSequenceKeypoint.new(
-            0.5,
-            Color3.fromRGB(55, 45, 10)
-        ),
-        ColorSequenceKeypoint.new(
-            1,
-            Color3.fromRGB(12, 12, 12)
-        )
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(12, 12, 12)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(55, 45, 10)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 12, 12))
     })
-
     Gradient.Rotation = 45
-    Gradient.Parent = Main
+    Gradient.Parent = MainFrame
 
-    local Animation = 0
+    local rotation = 0
 
     RunService.RenderStepped:Connect(function(dt)
 
-        if not Frame.Parent then
+        if not GlowFrame.Parent then
             return
         end
 
-        Animation = (Animation + dt * 1.5) % 6.283185307
+        rotation = (rotation + dt * 1.5) % 6.283185307
 
-        Gradient.Rotation =
-            math.sin(Animation) * 15 + 45
-
-        Frame.BackgroundTransparency =
-            math.sin(Animation * 2) * 0.1 + 0.6
+        Gradient.Rotation = math.sin(rotation) * 15 + 45
+        GlowFrame.BackgroundTransparency =
+            math.sin(rotation * 2) * 0.1 + 0.6
 
     end)
 
-    --====================================================--
+    --==================================================
     -- TOP BAR
-    --====================================================--
+    --==================================================
 
     local TopBar = Instance.new("Frame")
-
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, 0, 0, 34)
     TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
     TopBar.BackgroundTransparency = 0.2
     TopBar.BorderSizePixel = 0
-    TopBar.Parent = Main
+    TopBar.Parent = MainFrame
 
     local TopCorner = Instance.new("UICorner")
     TopCorner.CornerRadius = UDim.new(0, 10)
     TopCorner.Parent = TopBar
 
-    local HubTitle = Instance.new("TextLabel")
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, -40, 1, 0)
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = "TXZZ76 HUB | discord.gg/cYKwrDjfKk"
+    Title.TextColor3 = Color3.fromRGB(255, 210, 0)
+    Title.TextSize = 11
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = TopBar
 
-    HubTitle.Size = UDim2.new(1, -40, 1, 0)
-    HubTitle.Position = UDim2.new(0, 10, 0, 0)
-    HubTitle.BackgroundTransparency = 1
-    HubTitle.Text = "TXZZ76 HUB | discord.gg/cYKwrDjfKk"
-    HubTitle.TextColor3 = Color3.fromRGB(255, 210, 0)
-    HubTitle.TextSize = 11
-    HubTitle.Font = Enum.Font.GothamBold
-    HubTitle.TextXAlignment = Enum.TextXAlignment.Left
-    HubTitle.Parent = TopBar
-
-    local Minimize = Instance.new("TextButton")
-
-    Minimize.Name = "MinimizeButton"
-    Minimize.Size = UDim2.new(0, 24, 0, 24)
-    Minimize.Position = UDim2.new(1, -28, 0.5, -12)
-    Minimize.BackgroundColor3 = Color3.fromRGB(45, 35, 5)
-    Minimize.Text = "_"
-    Minimize.TextColor3 = Color3.fromRGB(255, 220, 0)
-    Minimize.TextSize = 14
-    Minimize.Font = Enum.Font.GothamBold
-    Minimize.Parent = TopBar
+    local MinimizeButton = Instance.new("TextButton")
+    MinimizeButton.Name = "MinimizeButton"
+    MinimizeButton.Size = UDim2.new(0, 24, 0, 24)
+    MinimizeButton.Position = UDim2.new(1, -28, 0.5, -12)
+    MinimizeButton.BackgroundColor3 = Color3.fromRGB(45, 35, 5)
+    MinimizeButton.Text = "_"
+    MinimizeButton.TextColor3 = Color3.fromRGB(255, 220, 0)
+    MinimizeButton.TextSize = 14
+    MinimizeButton.Font = Enum.Font.GothamBold
+    MinimizeButton.Parent = TopBar
 
     local MinCorner = Instance.new("UICorner")
     MinCorner.CornerRadius = UDim.new(0, 6)
-    MinCorner.Parent = Minimize
+    MinCorner.Parent = MinimizeButton
 
-    --====================================================--
+    --==================================================
     -- SCROLL
-    --====================================================--
+    --==================================================
 
     local Scroll = Instance.new("ScrollingFrame")
-
     Scroll.Name = "ScrollContainer"
     Scroll.Size = UDim2.new(1, -12, 1, -42)
     Scroll.Position = UDim2.new(0, 6, 0, 38)
@@ -536,306 +412,242 @@ local function StartHub()
     Scroll.BorderSizePixel = 0
     Scroll.ScrollBarThickness = 2
     Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 200, 0)
-    Scroll.Parent = Main
+    Scroll.Parent = MainFrame
 
-    local Layout = Instance.new("UIListLayout")
+    local List = Instance.new("UIListLayout")
+    List.SortOrder = Enum.SortOrder.LayoutOrder
+    List.Padding = UDim.new(0, 6)
+    List.Parent = Scroll
 
-    Layout.SortOrder = Enum.SortOrder.LayoutOrder
-    Layout.Padding = UDim.new(0, 6)
-    Layout.Parent = Scroll
-
-    Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    List:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 
         Scroll.CanvasSize = UDim2.new(
             0,
             0,
             0,
-            Layout.AbsoluteContentSize.Y + 8
+            List.AbsoluteContentSize.Y + 8
         )
 
     end)
 
-    --====================================================--
-    -- HUBS
-    --====================================================--
+    --==================================================
+    -- SCRIPTS
+    --==================================================
 
     local Scripts = {
-
         {
             Name = "ANTI HIT",
             HasKey = false,
-            Script = [[
-                script_key = "Trial"
-                loadstring(game:HttpGet("https://api.getpolsec.com/scripts/hosted/6582551b42d21c6b7eb55f1d76d8d50ce53cb35592093d6615b5e83437594dc0.lua"))()
-            ]]
+            Script = 'script_key = "Trial"; loadstring(game:HttpGet("https://api.getpolsec.com/scripts/hosted/6582551b42d21c6b7eb55f1d76d8d50ce53cb35592093d6615b5e83437594dc0.lua"))()'
         },
 
         {
             Name = "BIGFROOT",
             HasKey = true,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/hanniii1/Loader/refs/heads/main/BFLoader.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/hanniii1/Loader/refs/heads/main/BFLoader.lua"))()'
         },
 
         {
             Name = "BK HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/9ee4edde227ac85f50872bf9e4226508.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/9ee4edde227ac85f50872bf9e4226508.lua"))()'
         },
 
         {
             Name = "CLOVER HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://rawscripts.net/raw/Steal-An-Egg-Clover-Hub-or-Auto-Steal-Egg-Predictor-Auto-Hatch-and-ESP-226600"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://rawscripts.net/raw/Steal-An-Egg-Clover-Hub-or-Auto-Steal-Egg-Predictor-Auto-Hatch-and-ESP-226600"))()'
         },
 
         {
             Name = "FOXNAME HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/Bliqe/Upload/refs/heads/main/Games/RUO/12665928789.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/Bliqe/Upload/refs/heads/main/Games/RUO/12665928789.lua"))()'
         },
 
         {
             Name = "FYY HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://FyyCommunity.my.id"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://FyyCommunity.my.id"))()'
         },
 
         {
             Name = "Keyless Hub",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/97c3f6db55a2cf72141537a85458e5a7.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/97c3f6db55a2cf72141537a85458e5a7.lua"))()'
         },
 
         {
             Name = "LENNON HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv2/main/stealaneggv2"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv2/main/stealaneggv2"))()'
         },
 
         {
             Name = "LEST HUB",
             HasKey = false,
-            Script = [[
-                getgenv().SCRIPT_KEY = "KEYLESS"
-                loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/c916d48837ab69c48a9b3cafb04b49c8d9253af84cf8e403b19e2be302cbe67a/download"))()
-            ]]
+            Script = 'getgenv().SCRIPT_KEY = "KEYLESS"; loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/c916d48837ab69c48a9b3cafb04b49c8d9253af84cf8e403b19e2be302cbe67a/download"))()'
         },
 
         {
             Name = "MIRANDA HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs"))()'
         },
 
         {
             Name = "MOSHI HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/moshixzn/ahhagdienavd/refs/heads/main/Loader.lua.txt"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/moshixzn/ahhagdienavd/refs/heads/main/Loader.lua.txt"))()'
         },
 
         {
             Name = "OBUROSBOS",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()'
         },
 
         {
             Name = "OMG HUB",
             HasKey = true,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))()'
         },
 
         {
             Name = "OXIDE HUB",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/xulfo/Oxide-Loader/main/Main.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/xulfo/Oxide-Loader/main/Main.lua"))()'
         },
 
         {
             Name = "PET SPAWNER",
             HasKey = true,
-            Script = [[
-                loadstring(game:HttpGet("https://scriptversekey.xyz/s/steal-an-egg-pet-spawner"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://scriptversekey.xyz/s/steal-an-egg-pet-spawner"))()'
         },
 
         {
             Name = "RENE BATERBONIA SCRIPT",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/sabscrip-arch/srver/refs/heads/main/Stealanegg"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/sabscrip-arch/srver/refs/heads/main/Stealanegg"))()'
         },
 
         {
             Name = "RIFT HUB",
             HasKey = true,
-            Script = [[
-                loadstring(game:HttpGet("https://rifton.top/loader.lua"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://rifton.top/loader.lua"))()'
         },
 
         {
             Name = "SENA HUB KEYLESS",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/senarblx/sena/refs/heads/main/loader"))()
-            ]]
+            Script = "loadstring(game:HttpGet('https://raw.githubusercontent.com/senarblx/sena/refs/heads/main/loader'))()"
         },
 
         {
             Name = "SERVER FINDER 1 PEOPLE",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://api.obscuravm.com/scripts/8232205074136213997"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://api.obscuravm.com/scripts/8232205074136213997"))()'
         },
 
         {
             Name = "STEAL AN EGG",
             HasKey = false,
-            Script = [[
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/Dodoyung24/script-core/main/Steal-An-Egg"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/Dodoyung24/script-core/main/Steal-An-Egg"))()'
         },
 
         {
             Name = "ZEROIN HUB",
             HasKey = true,
-            Script = [[
-                loadstring(game:HttpGet("https://zeroinhub.com/api/script"))()
-            ]]
+            Script = 'loadstring(game:HttpGet("https://zeroinhub.com/api/script"))()'
         }
-
     }
 
     table.sort(Scripts, function(a, b)
         return a.Name:lower() < b.Name:lower()
     end)
 
-    --====================================================--
-    -- BOTÕES
-    --====================================================--
+    --==================================================
+    -- CRIAR BOTÕES
+    --==================================================
 
-    for i, item in ipairs(Scripts) do
+    for i, data in ipairs(Scripts) do
 
-        local Row = Instance.new("Frame")
+        local Item = Instance.new("Frame")
+        Item.Name = data.Name
+        Item.LayoutOrder = i
+        Item.Size = UDim2.new(1, -4, 0, 32)
+        Item.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+        Item.BackgroundTransparency = 0.2
+        Item.BorderSizePixel = 0
+        Item.Parent = Scroll
 
-        Row.Name = item.Name
-        Row.LayoutOrder = i
-        Row.Size = UDim2.new(1, -4, 0, 32)
-        Row.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-        Row.BackgroundTransparency = 0.2
-        Row.BorderSizePixel = 0
-        Row.Parent = Scroll
+        local ItemCorner = Instance.new("UICorner")
+        ItemCorner.CornerRadius = UDim.new(0, 5)
+        ItemCorner.Parent = Item
 
-        local RowCorner = Instance.new("UICorner")
-        RowCorner.CornerRadius = UDim.new(0, 5)
-        RowCorner.Parent = Row
-
-        local RowStroke = Instance.new("UIStroke")
-        RowStroke.Color = Color3.fromRGB(35, 35, 35)
-        RowStroke.Thickness = 1
-        RowStroke.Parent = Row
+        local ItemStroke = Instance.new("UIStroke")
+        ItemStroke.Color = Color3.fromRGB(35, 35, 35)
+        ItemStroke.Thickness = 1
+        ItemStroke.Parent = Item
 
         local Name = Instance.new("TextLabel")
-
         Name.Size = UDim2.new(0.42, 0, 1, 0)
         Name.Position = UDim2.new(0, 8, 0, 0)
         Name.BackgroundTransparency = 1
-        Name.Text = item.Name
+        Name.Text = data.Name
         Name.TextColor3 = Color3.fromRGB(220, 220, 220)
         Name.TextSize = 9
         Name.Font = Enum.Font.GothamSemibold
         Name.TextXAlignment = Enum.TextXAlignment.Left
-        Name.Parent = Row
+        Name.Parent = Item
 
-        local Status = Instance.new("Frame")
+        local Badge = Instance.new("Frame")
+        Badge.Size = UDim2.new(0, 56, 0, 18)
+        Badge.Position = UDim2.new(1, -132, 0.5, -9)
+        Badge.BorderSizePixel = 0
+        Badge.Parent = Item
 
-        Status.Size = UDim2.new(0, 56, 0, 18)
-        Status.Position = UDim2.new(1, -132, 0.5, -9)
-        Status.BorderSizePixel = 0
-        Status.Parent = Row
+        local BadgeCorner = Instance.new("UICorner")
+        BadgeCorner.CornerRadius = UDim.new(0, 4)
+        BadgeCorner.Parent = Badge
 
-        local StatusCorner = Instance.new("UICorner")
-        StatusCorner.CornerRadius = UDim.new(0, 4)
-        StatusCorner.Parent = Status
+        local BadgeStroke = Instance.new("UIStroke")
+        BadgeStroke.Thickness = 1
+        BadgeStroke.Parent = Badge
 
-        local StatusStroke = Instance.new("UIStroke")
-        StatusStroke.Thickness = 1
-        StatusStroke.Parent = Status
+        local BadgeText = Instance.new("TextLabel")
+        BadgeText.Size = UDim2.new(1, 0, 1, 0)
+        BadgeText.BackgroundTransparency = 1
+        BadgeText.TextSize = 8
+        BadgeText.Font = Enum.Font.GothamBold
+        BadgeText.Parent = Badge
 
-        local StatusText = Instance.new("TextLabel")
+        if data.HasKey then
 
-        StatusText.Size = UDim2.new(1, 0, 1, 0)
-        StatusText.BackgroundTransparency = 1
-        StatusText.TextSize = 8
-        StatusText.Font = Enum.Font.GothamBold
-        StatusText.Parent = Status
-
-        if item.HasKey then
-
-            Status.BackgroundColor3 =
-                Color3.fromRGB(38, 32, 8)
-
-            StatusStroke.Color =
-                Color3.fromRGB(255, 200, 0)
-
-            StatusText.Text = "KEY"
-
-            StatusText.TextColor3 =
-                Color3.fromRGB(255, 215, 0)
+            Badge.BackgroundColor3 = Color3.fromRGB(38, 32, 8)
+            BadgeStroke.Color = Color3.fromRGB(255, 200, 0)
+            BadgeText.Text = "KEY"
+            BadgeText.TextColor3 = Color3.fromRGB(255, 215, 0)
 
         else
 
-            Status.BackgroundColor3 =
-                Color3.fromRGB(8, 36, 14)
-
-            StatusStroke.Color =
-                Color3.fromRGB(30, 180, 70)
-
-            StatusText.Text = "KEYLESS"
-
-            StatusText.TextColor3 =
-                Color3.fromRGB(50, 230, 100)
+            Badge.BackgroundColor3 = Color3.fromRGB(8, 36, 14)
+            BadgeStroke.Color = Color3.fromRGB(30, 180, 70)
+            BadgeText.Text = "KEYLESS"
+            BadgeText.TextColor3 = Color3.fromRGB(50, 230, 100)
 
         end
 
         local Execute = Instance.new("TextButton")
-
         Execute.Size = UDim2.new(0, 64, 0, 22)
         Execute.Position = UDim2.new(1, -70, 0.5, -11)
         Execute.BackgroundColor3 = Color3.fromRGB(45, 35, 5)
-        Execute.BorderSizePixel = 0
         Execute.Text = "EXECUTE"
         Execute.TextColor3 = Color3.fromRGB(255, 210, 0)
         Execute.TextSize = 9
         Execute.Font = Enum.Font.GothamBold
-        Execute.Parent = Row
+        Execute.BorderSizePixel = 0
+        Execute.Parent = Item
 
         local ExecuteCorner = Instance.new("UICorner")
         ExecuteCorner.CornerRadius = UDim.new(0, 4)
@@ -848,64 +660,38 @@ local function StartHub()
 
         Execute.MouseButton1Click:Connect(function()
 
-            local success, err = pcall(function()
-                local fn = loadstring(item.Script)
-
-                if not fn then
-                    error("loadstring não disponível")
-                end
-
-                fn()
+            local success = pcall(function()
+                loadstring(data.Script)()
             end)
 
             if success then
 
                 Execute.Text = "LOADED"
-                Execute.TextColor3 =
-                    Color3.fromRGB(50, 230, 100)
+                Execute.TextColor3 = Color3.fromRGB(50, 230, 100)
+                Execute.BackgroundColor3 = Color3.fromRGB(8, 36, 14)
+                ExecuteStroke.Color = Color3.fromRGB(30, 180, 70)
 
-                Execute.BackgroundColor3 =
-                    Color3.fromRGB(8, 36, 14)
-
-                ExecuteStroke.Color =
-                    Color3.fromRGB(30, 180, 70)
-
-                HubNotify("Executed " .. item.Name)
+                Notify("✓ Executed " .. data.Name)
 
             else
 
                 Execute.Text = "ERROR"
+                Execute.TextColor3 = Color3.fromRGB(255, 80, 80)
 
-                Execute.TextColor3 =
-                    Color3.fromRGB(255, 100, 100)
-
-                HubNotify(
-                    "Erro em " .. item.Name
-                )
-
-                warn(
-                    "[TXZZ76] Erro: ",
-                    err
-                )
+                Notify("✕ Erro ao executar " .. data.Name)
 
             end
 
             task.delay(2, function()
 
-                if not Execute.Parent then
-                    return
+                if Execute.Parent then
+
+                    Execute.Text = "EXECUTE"
+                    Execute.TextColor3 = Color3.fromRGB(255, 210, 0)
+                    Execute.BackgroundColor3 = Color3.fromRGB(45, 35, 5)
+                    ExecuteStroke.Color = Color3.fromRGB(190, 150, 0)
+
                 end
-
-                Execute.Text = "EXECUTE"
-
-                Execute.TextColor3 =
-                    Color3.fromRGB(255, 210, 0)
-
-                Execute.BackgroundColor3 =
-                    Color3.fromRGB(45, 35, 5)
-
-                ExecuteStroke.Color =
-                    Color3.fromRGB(190, 150, 0)
 
             end)
 
@@ -913,33 +699,28 @@ local function StartHub()
 
     end
 
-    --====================================================--
-    -- ARRASTAR
-    --====================================================--
+    --==================================================
+    -- ARRASTAR PAINEL
+    --==================================================
 
-    local Dragging = false
-    local DragStart
-    local StartPosition
-    local DragInput
+    local dragging = false
+    local dragStart
+    local startPosition
+    local dragInput
 
     TopBar.InputBegan:Connect(function(input)
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-            or input.UserInputType ==
-            Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
 
-            Dragging = true
-            DragStart = input.Position
-            StartPosition = Frame.Position
+            dragging = true
+            dragStart = input.Position
+            startPosition = GlowFrame.Position
 
             input.Changed:Connect(function()
 
-                if input.UserInputState ==
-                    Enum.UserInputState.End then
-
-                    Dragging = false
-
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
                 end
 
             end)
@@ -950,12 +731,10 @@ local function StartHub()
 
     TopBar.InputChanged:Connect(function(input)
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseMovement
-            or input.UserInputType ==
-            Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
 
-            DragInput = input
+            dragInput = input
 
         end
 
@@ -963,104 +742,84 @@ local function StartHub()
 
     UserInputService.InputChanged:Connect(function(input)
 
-        if input == DragInput and Dragging then
+        if input == dragInput and dragging then
 
-            local Delta =
-                input.Position - DragStart
+            local delta = input.Position - dragStart
 
-            Frame.Position = UDim2.new(
-                StartPosition.X.Scale,
-                StartPosition.X.Offset + Delta.X,
-                StartPosition.Y.Scale,
-                StartPosition.Y.Offset + Delta.Y
+            GlowFrame.Position = UDim2.new(
+                startPosition.X.Scale,
+                startPosition.X.Offset + delta.X,
+                startPosition.Y.Scale,
+                startPosition.Y.Offset + delta.Y
             )
 
         end
 
     end)
 
-    --====================================================--
+    --==================================================
     -- MINIMIZAR
-    --====================================================--
+    --==================================================
 
-    local Minimized = false
+    local minimized = false
 
-    Minimize.MouseButton1Click:Connect(function()
+    MinimizeButton.MouseButton1Click:Connect(function()
 
-        Minimized = not Minimized
+        if minimized then
 
-        if Minimized then
-
-            Minimize.Text = "+"
-            Scroll.Visible = false
+            Scroll.Visible = true
+            MinimizeButton.Text = "_"
 
             TweenService:Create(
-                Frame,
-                TweenInfo.new(
-                    0.25,
-                    Enum.EasingStyle.Quart,
-                    Enum.EasingDirection.Out
-                ),
-                {
-                    Size = UDim2.new(0, 328, 0, 42)
-                }
-            ):Play()
-
-            TweenService:Create(
-                Main,
-                TweenInfo.new(
-                    0.25,
-                    Enum.EasingStyle.Quart,
-                    Enum.EasingDirection.Out
-                ),
-                {
-                    Size = UDim2.new(0, 320, 0, 34)
-                }
-            ):Play()
-
-        else
-
-            Minimize.Text = "_"
-
-            TweenService:Create(
-                Frame,
-                TweenInfo.new(
-                    0.25,
-                    Enum.EasingStyle.Quart,
-                    Enum.EasingDirection.Out
-                ),
+                GlowFrame,
+                TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
                 {
                     Size = UDim2.new(0, 328, 0, 248)
                 }
             ):Play()
 
             TweenService:Create(
-                Main,
-                TweenInfo.new(
-                    0.25,
-                    Enum.EasingStyle.Quart,
-                    Enum.EasingDirection.Out
-                ),
+                MainFrame,
+                TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
                 {
                     Size = UDim2.new(0, 320, 0, 240)
                 }
             ):Play()
 
-            task.delay(0.2, function()
+            minimized = false
 
-                if Scroll.Parent then
-                    Scroll.Visible = true
-                end
+        else
 
-            end)
+            MinimizeButton.Text = "+"
+
+            local tween = TweenService:Create(
+                GlowFrame,
+                TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                {
+                    Size = UDim2.new(0, 328, 0, 42)
+                }
+            )
+
+            TweenService:Create(
+                MainFrame,
+                TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                {
+                    Size = UDim2.new(0, 320, 0, 34)
+                }
+            ):Play()
+
+            tween:Play()
+
+            Scroll.Visible = false
+            minimized = true
 
         end
 
     end)
 
-    --====================================================--
-    -- INSERT / RIGHT CONTROL
-    --====================================================--
+    --==================================================
+    -- ABRIR/FECHAR COM INSERT OU RIGHT CTRL
+    --==================================================
 
     UserInputService.InputBegan:Connect(function(input, processed)
 
@@ -1068,20 +827,20 @@ local function StartHub()
             return
         end
 
-        if input.KeyCode == Enum.KeyCode.Insert
-            or input.KeyCode == Enum.KeyCode.RightControl then
+        if input.KeyCode == Enum.KeyCode.RightControl
+            or input.KeyCode == Enum.KeyCode.Insert then
 
-            Frame.Visible = not Frame.Visible
+            GlowFrame.Visible = not GlowFrame.Visible
 
         end
 
     end)
 
-    --====================================================--
-    -- TAG
-    --====================================================--
+    --==================================================
+    -- TAG DO DISCORD
+    --==================================================
 
-    local function CreateTag(character)
+    local function AddDiscordTag(character)
 
         if not character then
             return
@@ -1093,135 +852,88 @@ local function StartHub()
             return
         end
 
-        local Old = Head:FindFirstChild("SourcesHubTag")
+        local oldTag = Head:FindFirstChild("TXZZDiscordTag")
 
-        if Old then
-            Old:Destroy()
+        if oldTag then
+            oldTag:Destroy()
         end
 
         local Billboard = Instance.new("BillboardGui")
-
-        Billboard.Name = "SourcesHubTag"
+        Billboard.Name = "TXZZDiscordTag"
         Billboard.Size = UDim2.new(0, 200, 0, 35)
         Billboard.StudsOffset = Vector3.new(0, 2.5, 0)
         Billboard.AlwaysOnTop = true
         Billboard.Parent = Head
 
-        local Text = Instance.new("TextLabel")
+        local Label = Instance.new("TextLabel")
+        Label.Size = UDim2.new(1, 0, 1, 0)
+        Label.BackgroundTransparency = 1
+        Label.Text = DISCORD_LINK
+        Label.TextSize = 12
+        Label.Font = Enum.Font.GothamBold
+        Label.Parent = Billboard
 
-        Text.Size = UDim2.new(1, 0, 1, 0)
-        Text.BackgroundTransparency = 1
-        Text.Text = DISCORD_LINK
-        Text.TextSize = 12
-        Text.Font = Enum.Font.GothamBold
-        Text.Parent = Billboard
-
-        local Hue = 0
+        local hue = 0
 
         RunService.RenderStepped:Connect(function(dt)
 
-            if not Text.Parent then
+            if not Label.Parent then
                 return
             end
 
-            Hue = (Hue + dt * 0.35) % 1
-
-            Text.TextColor3 =
-                Color3.fromHSV(
-                    Hue,
-                    0.85,
-                    1
-                )
+            hue = (hue + dt * 0.35) % 1
+            Label.TextColor3 = Color3.fromHSV(hue, 0.85, 1)
 
         end)
 
     end
 
     if LocalPlayer.Character then
-        CreateTag(LocalPlayer.Character)
+        task.spawn(AddDiscordTag, LocalPlayer.Character)
     end
 
-    LocalPlayer.CharacterAdded:Connect(CreateTag)
+    LocalPlayer.CharacterAdded:Connect(function(character)
+        task.spawn(AddDiscordTag, character)
+    end)
 
-    HubNotify("TXZZ76 HUB carregado!")
+    Notify("✓ TXZZ76 HUB carregado!")
 
 end
 
---========================================================--
+--==================================================
 -- VERIFICAR KEY
---========================================================--
-
-local Verificando = false
+--==================================================
 
 Verify.MouseButton1Click:Connect(function()
 
-    if Verificando then
-        return
-    end
+    local typedKey = KeyBox.Text:gsub("^%s*(.-)%s*$", "%1")
 
-    Verificando = true
+    if typedKey == KEY_CORRETA then
 
-    local TypedKey = KeyBox.Text
+        Verify.Text = "✓ KEY VERIFICADA"
+        Verify.TextColor3 = Color3.fromRGB(50, 230, 100)
+        Verify.BackgroundColor3 = Color3.fromRGB(8, 36, 14)
 
-    TypedKey = TypedKey:gsub("^%s*(.-)%s*$", "%1")
+        task.wait(0.5)
 
-    if TypedKey == KEY_CORRETA then
-
-        Verify.Text = "KEY VERIFICADA"
-        Verify.TextColor3 =
-            Color3.fromRGB(80, 255, 130)
-
-        Verify.BackgroundColor3 =
-            Color3.fromRGB(8, 80, 30)
-
-        VerifyStroke.Color =
-            Color3.fromRGB(30, 200, 80)
-
-        NotifyKey("Key correta! Abrindo TXZZ76 HUB...")
-
-        task.wait(0.7)
-
-        pcall(function()
-            KeyGui:Destroy()
-        end)
-
-        task.wait(0.1)
+        KeyGui:Destroy()
 
         StartHub()
 
     else
 
-        Verify.Text = "KEY INCORRETA"
-        Verify.TextColor3 =
-            Color3.fromRGB(255, 100, 100)
-
-        Verify.BackgroundColor3 =
-            Color3.fromRGB(80, 20, 25)
-
-        NotifyKey("Key incorreta!")
-
-        task.wait(0.8)
+        Verify.Text = "✕ KEY INCORRETA"
+        Verify.TextColor3 = Color3.fromRGB(255, 80, 80)
+        Verify.BackgroundColor3 = Color3.fromRGB(55, 10, 10)
 
         KeyBox.Text = ""
 
+        task.wait(1)
+
         Verify.Text = "VERIFICAR KEY"
-        Verify.TextColor3 =
-            Color3.fromRGB(255, 210, 0)
-
-        Verify.BackgroundColor3 =
-            Color3.fromRGB(45, 35, 5)
-
-        VerifyStroke.Color =
-            Color3.fromRGB(190, 150, 0)
+        Verify.TextColor3 = Color3.fromRGB(255, 210, 0)
+        Verify.BackgroundColor3 = Color3.fromRGB(45, 35, 5)
 
     end
 
-    Verificando = false
-
 end)
-
---========================================================--
--- TESTE INICIAL
---========================================================--
-
-NotifyKey("TXZZ76 Key System carregado!")
